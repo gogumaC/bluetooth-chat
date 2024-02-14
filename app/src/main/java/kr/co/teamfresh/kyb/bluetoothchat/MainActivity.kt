@@ -62,19 +62,12 @@ class MainActivity : ComponentActivity() {
         if(bluetoothAdapter?.isEnabled==false){
             val enableBtIntent= Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             //startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT) -- deprecated
-
-
             bluetoothEnableLauncher.launch(enableBtIntent)
         }
         setContent {
             BluetoothChatTheme {
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
-                }
+                ChatScreen(Modifier.fillMaxSize())
             }
         }
     }
