@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "kr.co.teamfresh.kyb.bluetoothchat"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "kr.co.teamfresh.kyb.bluetoothchat"
