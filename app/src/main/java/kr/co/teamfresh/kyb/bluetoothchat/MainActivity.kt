@@ -8,6 +8,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,16 +25,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_READ
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_TOAST
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_WRITE
 
 class MainActivity : ComponentActivity() {
-
-
 
     private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var bluetoothEnableLauncher:ActivityResultLauncher<Intent>
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val mHandler=object: Handler(Looper.getMainLooper()){
+            override fun handleMessage(msg: Message) {
+                when(msg.what){
+                    MESSAGE_READ->{
+                        val readBuf=msg.obj as ByteArray
+                    }
+                    MESSAGE_WRITE->{
+                        Toast.makeText(this@MainActivity,"Success send data",Toast.LENGTH_SHORT).show()
+                    }
+                    MESSAGE_TOAST->{
+                        Toast.makeText(this@MainActivity,"ERROR",Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
 
         val bluetoothManager:BluetoothManager=getSystemService(BluetoothManager::class.java)
         val bluetoothAdapter:BluetoothAdapter?=bluetoothManager.adapter
@@ -58,16 +81,20 @@ class MainActivity : ComponentActivity() {
         //블루투스 권한 확인
         requestBluetoothConnectPermission()
 
+        val service=BluetoothChatService(mHandler,this,bluetoothAdapter!!)
+
         //블루투스가 활성화 되어있는지 확인
         if(bluetoothAdapter?.isEnabled==false){
             val enableBtIntent= Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             //startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT) -- deprecated
             bluetoothEnableLauncher.launch(enableBtIntent)
         }
+
+        service.getPairedDeviceList()
         setContent {
             BluetoothChatTheme {
                 // A surface container using the 'background' color from the theme
-                ChatScreen(Modifier.fillMaxSize())
+                ChatScreen(Modifier.fillMaxSize(),service)
             }
         }
     }
@@ -79,23 +106,5 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    }
-}
-
-
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BluetoothChatTheme {
-        Greeting("Android")
     }
 }
