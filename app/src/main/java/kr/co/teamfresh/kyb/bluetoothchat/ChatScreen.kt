@@ -40,30 +40,38 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 
 @Composable
-fun ChatScreen(modifier: Modifier=Modifier,service:BluetoothChatService?=null){
+fun ChatScreen(
+    onClickPlusButton: () -> Unit,
+    modifier: Modifier = Modifier,
+    service: BluetoothChatService? = null
+) {
 
-    var showPairedDeviceDialog by remember{mutableStateOf(false)}
+    var showPairedDeviceDialog by remember { mutableStateOf(false) }
 
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.background
     ) {
-        Box(){
-            Column(){
-                Button(onClick = { showPairedDeviceDialog=true },modifier=Modifier.size(width=160.dp,height=100.dp)) {
+        Box() {
+            Column() {
+                Button(
+                    onClick = { showPairedDeviceDialog = true },
+                    modifier = Modifier.size(width = 160.dp, height = 100.dp)
+                ) {
                     Text(text = "Find device")
                 }
-                Button(onClick = {  },modifier=Modifier.size(width=160.dp,height=100.dp)) {
+                Button(onClick = { }, modifier = Modifier.size(width = 160.dp, height = 100.dp)) {
                     Text(text = "Paring list")
                 }
-                Button(onClick = {  },modifier=Modifier.size(width=160.dp,height=100.dp)) {
+                Button(onClick = { }, modifier = Modifier.size(width = 160.dp, height = 100.dp)) {
                     Text(text = "Send Hello")
                 }
             }
 
-            if(showPairedDeviceDialog) PairedDeviceDialog(
-                onDismissRequest = { showPairedDeviceDialog=false },
-                deviceList= service?.getPairedDeviceList()?.toList()?:listOf()
+            if (showPairedDeviceDialog) PairedDeviceDialog(
+                onClickPlusButton = onClickPlusButton,
+                onDismissRequest = { showPairedDeviceDialog = false },
+                deviceList = service?.getPairedDeviceList()?.toList() ?: listOf()
             )
         }
 
@@ -75,29 +83,44 @@ fun ChatScreen(modifier: Modifier=Modifier,service:BluetoothChatService?=null){
 
 @JvmName("PairedDeviceDialog")
 @Composable
-fun PairedDeviceDialog(onDismissRequest:()->Unit,deviceList:List<BluetoothDevice>,modifier: Modifier=Modifier){
-    PairedDeviceDialog(onDismissRequest = onDismissRequest, deviceNameList = deviceList.map{it.name})
+fun PairedDeviceDialog(
+    onClickPlusButton: () -> Unit,
+    onDismissRequest: () -> Unit,
+    deviceList: List<BluetoothDevice>,
+    modifier: Modifier = Modifier
+) {
+    PairedDeviceDialog(
+        onClickPlusButton,
+        onDismissRequest = onDismissRequest,
+        deviceNameList = deviceList.map { it.name })
 }
 
 @JvmName("PairedDeviceDialogWithString")
 @Composable
-fun PairedDeviceDialog(onDismissRequest:()->Unit,deviceNameList:List<String>,modifier: Modifier=Modifier){
-    Dialog(onDismissRequest = onDismissRequest){
+fun PairedDeviceDialog(
+    onClickPlusButton: () -> Unit,
+    onDismissRequest: () -> Unit,
+    deviceNameList: List<String>,
+    modifier: Modifier = Modifier
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
         Card(
-            modifier= modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .height(500.dp)
                 .padding(16.dp),
-            shape= RoundedCornerShape(16.dp)
-        ){
-            IconButton(onClick = {},modifier=Modifier.align(Alignment.End)){
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            IconButton(onClick = onClickPlusButton, modifier = Modifier.align(Alignment.End)) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null)
             }
-            LazyColumn(verticalArrangement=Arrangement.spacedBy(8.dp)){
-                items(deviceNameList){item->
-                    BluetoothDeviceInfoUnit(deviceName = item,modifier= Modifier
-                        .fillMaxWidth()
-                        .height(50.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(deviceNameList) { item ->
+                    BluetoothDeviceInfoUnit(
+                        deviceName = item, modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    )
                 }
             }
         }
@@ -105,39 +128,40 @@ fun PairedDeviceDialog(onDismissRequest:()->Unit,deviceNameList:List<String>,mod
 }
 
 
-
 @SuppressLint("MissingPermission")
 @Composable
-fun BluetoothDeviceInfoUnit(device:BluetoothDevice,modifier: Modifier=Modifier){
-    BluetoothDeviceInfoUnit(device.name,modifier)
+fun BluetoothDeviceInfoUnit(device: BluetoothDevice, modifier: Modifier = Modifier) {
+    BluetoothDeviceInfoUnit(device.name, modifier)
 }
 
 @SuppressLint("MissingPermission")
 @Composable
-fun BluetoothDeviceInfoUnit(deviceName:String,modifier: Modifier=Modifier){
-    Text(text=deviceName,
-        modifier=modifier.background(Color.Blue))
+fun BluetoothDeviceInfoUnit(deviceName: String, modifier: Modifier = Modifier) {
+    Text(
+        text = deviceName,
+        modifier = modifier.background(Color.Blue)
+    )
 }
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun ChatScreenPreview(){
+fun ChatScreenPreview() {
     BluetoothChatTheme {
-        ChatScreen(Modifier.fillMaxSize())
+        ChatScreen({}, Modifier.fillMaxSize())
     }
 }
 
 @Preview
 @Composable
-fun PairedDeviceListDialogPreview(){
+fun PairedDeviceListDialogPreview() {
     BluetoothChatTheme {
-        PairedDeviceDialog(onDismissRequest = {  },List(3){"Device$it"})
+        PairedDeviceDialog({}, onDismissRequest = { }, List(3) { "Device$it" })
     }
 }
 
 @Preview
 @Composable
-fun BluetoothDeviceInfoUnitPreview(){
+fun BluetoothDeviceInfoUnitPreview() {
     BluetoothChatTheme {
         BluetoothDeviceInfoUnit(deviceName = "device1")
     }
