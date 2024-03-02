@@ -12,25 +12,19 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_READ
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_TOAST
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_WRITE
 
 class MainActivity : ComponentActivity() {
 
