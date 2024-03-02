@@ -81,9 +81,9 @@ class BluetoothChatService(
 
 
     @SuppressLint("MissingPermission") // 이거는 앞에서 미리 검사할건데 나중에 합치는게 좋을듯
-    fun getPairedDeviceList(): Set<BluetoothDevice> {
+    fun getPairedDeviceList(): List<BluetoothDevice> {
 
-        return bluetoothAdapter.bondedDevices
+        return bluetoothAdapter.bondedDevices.toList()
 
     }
 

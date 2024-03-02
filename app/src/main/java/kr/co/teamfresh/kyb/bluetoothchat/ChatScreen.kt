@@ -2,17 +2,18 @@ package kr.co.teamfresh.kyb.bluetoothchat
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,42 +28,26 @@ fun ChatScreen(
     service: BluetoothChatService? = null
 ) {
 
-    var showPairedDeviceDialog by remember { mutableStateOf(false) }
-
     Surface(
-        modifier = modifier,
+        modifier = modifier.padding(16.dp),
         color = MaterialTheme.colorScheme.background
     ) {
-        Box() {
-            Column() {
-                Button(
-                    onClick = { showPairedDeviceDialog = true },
-                    modifier = Modifier.size(width = 160.dp, height = 100.dp)
-                ) {
-                    Text(text = "Find device")
-                }
-                Button(onClick = { }, modifier = Modifier.size(width = 160.dp, height = 100.dp)) {
-                    Text(text = "Paring list")
-                }
-                Button(onClick = { }, modifier = Modifier.size(width = 160.dp, height = 100.dp)) {
-                    Text(text = "Send Hello")
+        Column {
+            Text("연결 가능한 기기 목록")
+            Spacer(modifier = Modifier.size(8.dp))
+            LazyColumn() {
+                items(service?.getPairedDeviceList() ?: listOf()) {
+                    Button(onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth()) {
+                        Column() {
+                            Text(text = it.name)
+                            Text(text = it.address)
+                        }
+                    }
                 }
             }
-
-            if (showPairedDeviceDialog) PairedDeviceDialog(
-                onClickPlusButton = onClickPlusButton,
-                onDismissRequest = { showPairedDeviceDialog = false },
-                deviceList = service?.getPairedDeviceList()?.toList() ?: listOf()
-            )
         }
-
-
     }
-
-
 }
-
-
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
@@ -72,18 +57,3 @@ fun ChatScreenPreview() {
     }
 }
 
-@Preview
-@Composable
-fun PairedDeviceListDialogPreview() {
-    BluetoothChatTheme {
-        PairedDeviceDialog({}, onDismissRequest = { }, List(3) { "Device$it" })
-    }
-}
-
-@Preview
-@Composable
-fun BluetoothDeviceInfoUnitPreview() {
-    BluetoothChatTheme {
-        BluetoothDeviceInfoUnit(deviceName = "device1")
-    }
-}
