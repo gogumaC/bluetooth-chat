@@ -81,67 +81,7 @@ fun ChatScreen(
 
 }
 
-@JvmName("PairedDeviceDialog")
-@Composable
-fun PairedDeviceDialog(
-    onClickPlusButton: () -> Unit,
-    onDismissRequest: () -> Unit,
-    deviceList: List<BluetoothDevice>,
-    modifier: Modifier = Modifier
-) {
-    PairedDeviceDialog(
-        onClickPlusButton,
-        onDismissRequest = onDismissRequest,
-        deviceNameList = deviceList.map { it.name })
-}
 
-@JvmName("PairedDeviceDialogWithString")
-@Composable
-fun PairedDeviceDialog(
-    onClickPlusButton: () -> Unit,
-    onDismissRequest: () -> Unit,
-    deviceNameList: List<String>,
-    modifier: Modifier = Modifier
-) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        Card(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(500.dp)
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            IconButton(onClick = onClickPlusButton, modifier = Modifier.align(Alignment.End)) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-            }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(deviceNameList) { item ->
-                    BluetoothDeviceInfoUnit(
-                        deviceName = item, modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@SuppressLint("MissingPermission")
-@Composable
-fun BluetoothDeviceInfoUnit(device: BluetoothDevice, modifier: Modifier = Modifier) {
-    BluetoothDeviceInfoUnit(device.name, modifier)
-}
-
-@SuppressLint("MissingPermission")
-@Composable
-fun BluetoothDeviceInfoUnit(deviceName: String, modifier: Modifier = Modifier) {
-    Text(
-        text = deviceName,
-        modifier = modifier.background(Color.Blue)
-    )
-}
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
