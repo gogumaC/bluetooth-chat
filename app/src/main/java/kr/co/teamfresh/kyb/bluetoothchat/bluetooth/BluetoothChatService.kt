@@ -28,7 +28,7 @@ class BluetoothChatService(
     private var mConnectedThread: ConnectedThread? = null
     private var mConnectThread: ConnectThread? = null
 
-    private val myUUID = UUID.randomUUID()
+    private val myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
 
     fun start() {
