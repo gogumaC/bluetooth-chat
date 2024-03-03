@@ -3,6 +3,7 @@ package kr.co.teamfresh.kyb.bluetoothchat.bluetooth
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.os.Bundle
@@ -88,6 +89,40 @@ class BluetoothChatService(
     }
 
 
+    private inner class AcceptThread : Thread() {
+        private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
+            bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord(name, myUUID)
+        }
+
+        override fun run() {
+            var shouldLoop = true
+            while (shouldLoop) {
+                val socket: BluetoothSocket? = try {
+                    mmServerSocket?.accept()
+                } catch (e: IOException) {
+                    Log.e(TAG, "Socket's accept() method failed", e)
+                    shouldLoop = false
+                    null
+                }
+
+                socket?.also {
+                    //manageMyConnectedSocket(it)
+                    mmServerSocket?.close()
+                    shouldLoop = false
+                }
+            }
+
+        }
+
+        fun cancel() {
+            try {
+                mmServerSocket?.close()
+            } catch (e: IOException) {
+                Log.e(TAG, "Could not close the connect socket", e)
+            }
+        }
+    }
+
     private inner class ConnectedThread(private val mmSocket: BluetoothSocket) : Thread() {
         private val mmInStream: InputStream = mmSocket.inputStream
         private val mmOutStream: OutputStream = mmSocket.outputStream
@@ -153,15 +188,21 @@ class BluetoothChatService(
         }
 
         override fun run() {
+            Log.d(TAG, "Begin ConnectThread")
+
+            bluetoothAdapter.cancelDiscovery()
             try {
+
                 connectSocket?.connect()
-                connectSocket?.let {
-                    val connectedThread = ConnectedThread(it)
-                }
+//                connectSocket?.let {
+//                    val connectedThread = ConnectedThread(it)
+//                }
             } catch (e: IOException) {
                 connectSocket?.close()
                 throw Exception("connect fail")
             }
+
+            connectSocket?.let { connected(connectSocket!!, device) }
         }
 
         fun cancel() {
