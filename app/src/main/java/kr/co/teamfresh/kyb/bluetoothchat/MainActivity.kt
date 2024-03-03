@@ -19,6 +19,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
@@ -28,9 +29,18 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var bluetoothEnableLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothSettingLauncher: ActivityResultLauncher<Intent>
+
+    private val bluetoothPermissions = listOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.BLUETOOTH_SCAN
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -68,17 +78,19 @@ class MainActivity : ComponentActivity() {
             }
 
         bluetoothPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) Toast.makeText(
-                    this,
-                    "bluetooth connect permission granted",
-                    Toast.LENGTH_SHORT
-                ).show()
-                else Toast.makeText(this, "bluetooth connect permission denied", Toast.LENGTH_SHORT)
-                    .show()
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+                val deniedList = result.filter { !it.value }.map { it.key }
 
+                if (deniedList.isNotEmpty()) {
+                    val map = deniedList.groupBy { permission ->
+                        if (shouldShowRequestPermissionRationale(permission)) "DENIED" else "EXPLAINED"
+                    }
+                    map["DENIED"]?.let {}
+                    map["EXPLAINED"]?.let {}
+                } else {
+
+                }
             }
-
         bluetoothSettingLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 
@@ -117,15 +129,29 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestBluetoothConnectPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) == PackageManager.PERMISSION_DENIED
-            ) {
-                bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+        val permissionList = mutableListOf<String>()
+
+        for (permission in bluetoothPermissions) {
+            val result = ContextCompat.checkSelfPermission(this, permission)
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(permission)
             }
         }
 
+        if (permissionList.isNotEmpty()) {
+            bluetoothPermissionLauncher.launch(permissionList.toTypedArray())
+        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//            if (ContextCompat.checkSelfPermission(
+//                    this,
+//                    Manifest.permission.BLUETOOTH_CONNECT
+//                ) == PackageManager.PERMISSION_DENIED
+//            ) {
+//                bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+//            }
+//        }
+
     }
+
+
 }

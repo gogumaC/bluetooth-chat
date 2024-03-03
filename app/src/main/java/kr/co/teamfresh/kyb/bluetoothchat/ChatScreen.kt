@@ -1,5 +1,6 @@
 package kr.co.teamfresh.kyb.bluetoothchat
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -35,9 +36,12 @@ fun ChatScreen(
         Column {
             Text("연결 가능한 기기 목록")
             Spacer(modifier = Modifier.size(8.dp))
-            LazyColumn() {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 items(service?.getPairedDeviceList() ?: listOf()) {
-                    Button(onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        service?.start()
+                        service?.connect(it.address)
+                    }, modifier = Modifier.fillMaxWidth()) {
                         Column() {
                             Text(text = it.name)
                             Text(text = it.address)
