@@ -14,6 +14,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 
+
 private const val TAG = "MY_APP_DEBUG_TAG"
 
 const val MESSAGE_READ = 0
@@ -28,11 +29,16 @@ class BluetoothChatService(
 
     private var mConnectedThread: ConnectedThread? = null
     private var mConnectThread: ConnectThread? = null
+    private var mAcceptThread: AcceptThread? = null
 
-    private val myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    private val myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//"8CE255C0-200A-11E0-AC64-0800200C9A66")
+    private val NAME="BluetoothChat"
 
 
     fun start() {
+
+        Log.d(TAG, "start :")
+
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
             mConnectThread = null
@@ -41,22 +47,55 @@ class BluetoothChatService(
             mConnectedThread!!.cancel()
             mConnectedThread = null
         }
+        if (mAcceptThread == null) {
+            mAcceptThread= AcceptThread().apply{start()}
+        }
 
     }
 
     //@SuppressLint("MissingPermission")
     fun connect(deviceAddress: String) {
-        if (bluetoothAdapter.isDiscovering) bluetoothAdapter.cancelDiscovery()
+        Log.d(TAG, "connect to: " + deviceAddress);
+
+        if (mConnectThread != null) {
+            mConnectThread!!.cancel()
+            mConnectThread = null
+        }
+        if (mConnectedThread != null) {
+            mConnectedThread!!.cancel()
+            mConnectedThread = null
+        }
+        //if (bluetoothAdapter.isDiscovering) bluetoothAdapter.cancelDiscovery()
 
 
         val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
+        try{
+            mConnectThread = ConnectThread(myUUID, device).apply {
+                start()
+            }
+        }catch(e:Exception){
+            Log.d(TAG,"connect fail : $e")
 
-        mConnectThread = ConnectThread(myUUID, device).apply {
-            start()
         }
+
     }
 
     fun connected(socket: BluetoothSocket, device: BluetoothDevice) {
+
+        Log.d(TAG,"connected $device")
+
+        if (mConnectThread != null) {
+            mConnectThread!!.cancel()
+            mConnectThread = null
+        }
+        if (mConnectedThread != null) {
+            mConnectedThread!!.cancel()
+            mConnectedThread = null
+        }
+        if(mAcceptThread!=null){
+            mAcceptThread!!.cancel()
+            mAcceptThread=null
+        }
         mConnectedThread = ConnectedThread(socket).apply {
             start()
         }
@@ -78,6 +117,10 @@ class BluetoothChatService(
             mConnectedThread!!.cancel();
             mConnectedThread = null;
         }
+        if(mAcceptThread!=null){
+            mAcceptThread!!.cancel()
+            mAcceptThread=null
+        }
     }
 
 
@@ -91,10 +134,14 @@ class BluetoothChatService(
 
     private inner class AcceptThread : Thread() {
         private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord(name, myUUID)
+            bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, myUUID)
         }
 
+
         override fun run() {
+
+            name="AcceptThread"
+            Log.d(TAG, "Socket's accept() method start")
             var shouldLoop = true
             while (shouldLoop) {
                 val socket: BluetoothSocket? = try {
@@ -107,6 +154,7 @@ class BluetoothChatService(
 
                 socket?.also {
                     //manageMyConnectedSocket(it)
+                    connected(it,it.remoteDevice)
                     mmServerSocket?.close()
                     shouldLoop = false
                 }
@@ -121,6 +169,74 @@ class BluetoothChatService(
                 Log.e(TAG, "Could not close the connect socket", e)
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private inner class ConnectThread(
+        private val myUUID: UUID,
+        private val device: BluetoothDevice
+    ) : Thread() {
+
+        private val connectSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
+            val m = device.javaClass.getMethod(
+                "createInsecureRfcommSocketToServiceRecord", *arrayOf<Class<*>>(
+                    UUID::class.java
+                )
+            )
+            val uuid=device.uuids.toList()[0].uuid
+            m.invoke(device,uuid) as BluetoothSocket
+            //device.createInsecureRfcommSocketToServiceRecord(myUUID)
+        }
+
+
+        override fun run() {
+            Log.d(TAG, "Begin ConnectThread ${device.bondState==BluetoothDevice.BOND_BONDED} | $myUUID")
+
+            Log.d(TAG,"Try connect : ")
+            val a=connectSocket?.isConnected
+//                val clazz=connectSocket!!.remoteDevice.javaClass
+//                val paramTypes= arrayOf<Class<*>>(Integer.TYPE)
+//                val m=clazz.getMethod("createRfcommSocket",*paramTypes)
+//                val fallbackSocket=m.invoke(connectSocket!!.remoteDevice,Integer.valueOf(1)) as BluetoothSocket
+//            fallbackSocket.connect()
+
+            connectSocket?.connect()
+            Log.d(TAG,"Connect success")
+//                connectSocket?.let {
+//                    val connectedThread = ConnectedThread(it)
+//                }
+
+//            try {
+//                Log.d(TAG,"Try connect : ")
+////                val clazz=connectSocket!!.remoteDevice.javaClass
+////                val paramTypes= arrayOf<Class<*>>(Integer.TYPE)
+////                val m=clazz.getMethod("createRfcommSocket",*paramTypes)
+////                val fallbackSocket=m.invoke(connectSocket!!.remoteDevice,Integer.valueOf(1)) as BluetoothSocket
+////                fallbackSocket.connect()
+//                connectSocket?.connect()
+//                Log.d(TAG,"Connect success")
+////                connectSocket?.let {
+////                    val connectedThread = ConnectedThread(it)
+////                }
+//            } catch (e: IOException) {
+//                connectSocket?.close()
+//                Log.d(TAG,"Connect failed and Socket closed")
+//                throw Exception("connect fail"+e)
+//            }
+
+            //connectSocket?.let { connected(connectSocket!!, device) }
+        }
+
+        fun cancel() {
+            try {
+                connectSocket?.close()
+            } catch (e: IOException) {
+                Log.e(TAG, "close() of connect" + connectSocket + " socket failed", e)
+            }
+
+        }
+
+
     }
 
     private inner class ConnectedThread(private val mmSocket: BluetoothSocket) : Thread() {
@@ -177,45 +293,7 @@ class BluetoothChatService(
     }
 
 
-    @SuppressLint("MissingPermission")
-    private inner class ConnectThread(
-        private val myUUID: UUID,
-        private val device: BluetoothDevice
-    ) : Thread() {
 
-        private val connectSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            device.createRfcommSocketToServiceRecord(myUUID)
-        }
-
-        override fun run() {
-            Log.d(TAG, "Begin ConnectThread")
-
-            bluetoothAdapter.cancelDiscovery()
-            try {
-
-                connectSocket?.connect()
-//                connectSocket?.let {
-//                    val connectedThread = ConnectedThread(it)
-//                }
-            } catch (e: IOException) {
-                connectSocket?.close()
-                throw Exception("connect fail")
-            }
-
-            connectSocket?.let { connected(connectSocket!!, device) }
-        }
-
-        fun cancel() {
-            try {
-                connectSocket?.close()
-            } catch (e: IOException) {
-                Log.e(TAG, "close() of connect" + connectSocket + " socket failed", e)
-            }
-
-        }
-
-
-    }
 
 
 }
