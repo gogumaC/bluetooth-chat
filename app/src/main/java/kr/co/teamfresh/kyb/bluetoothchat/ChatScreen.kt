@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 @Composable
 fun ChatScreen(
+    onBluetoothScan:()->Unit,
     onClickPlusButton: () -> Unit,
     modifier: Modifier = Modifier,
     service: BluetoothChatService? = null
@@ -35,6 +37,9 @@ fun ChatScreen(
     ) {
         Column {
             Text("연결 가능한 기기 목록")
+            Button(modifier=Modifier.align(Alignment.End),onClick = onBluetoothScan){
+                Text("기기 검색")
+            }
             Spacer(modifier = Modifier.size(8.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 items(service?.getPairedDeviceList() ?: listOf()) {
@@ -49,6 +54,7 @@ fun ChatScreen(
                     }
                 }
             }
+
         }
     }
 }
@@ -57,7 +63,7 @@ fun ChatScreen(
 @Composable
 fun ChatScreenPreview() {
     BluetoothChatTheme {
-        ChatScreen({}, Modifier.fillMaxSize())
+        ChatScreen({},{}, Modifier.fillMaxSize())
     }
 }
 

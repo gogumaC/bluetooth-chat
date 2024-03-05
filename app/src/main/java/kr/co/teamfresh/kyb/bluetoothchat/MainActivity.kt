@@ -33,6 +33,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var bluetoothEnableLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothSettingLauncher: ActivityResultLauncher<Intent>
 
+    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
+
     private val bluetoothPermissions = listOf(
         Manifest.permission.BLUETOOTH,
         Manifest.permission.BLUETOOTH_CONNECT,
@@ -96,6 +98,9 @@ class MainActivity : ComponentActivity() {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 
             }
+        bluetoothScanLauncher=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+
+        }
 
         //블루투스가 기기에서 지원되는지 확인
         if (bluetoothAdapter == null) {
@@ -116,11 +121,18 @@ class MainActivity : ComponentActivity() {
 
 
         val bluetoothSettingIntent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+        val discoverableIntent=Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply{
+            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,300)
+        }
         service.getPairedDeviceList()
         setContent {
             BluetoothChatTheme {
                 // A surface container using the 'background' color from the theme
-                ChatScreen(onClickPlusButton = {
+                ChatScreen(
+                    onBluetoothScan = {
+                                      bluetoothScanLauncher.launch(discoverableIntent)
+                    },
+                    onClickPlusButton = {
                     bluetoothSettingLauncher.launch(
                         bluetoothSettingIntent
                     )
