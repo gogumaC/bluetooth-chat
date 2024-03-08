@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -34,6 +35,9 @@ class BluetoothChatService(
     private val myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//"8CE255C0-200A-11E0-AC64-0800200C9A66")
     private val NAME="BluetoothChat"
 
+    init{
+        start()
+    }
 
     fun start() {
 
@@ -145,6 +149,7 @@ class BluetoothChatService(
             var shouldLoop = true
             while (shouldLoop) {
                 val socket: BluetoothSocket? = try {
+                    val a=mmServerSocket
                     mmServerSocket?.accept()
                 } catch (e: IOException) {
                     Log.e(TAG, "Socket's accept() method failed", e)
@@ -178,14 +183,14 @@ class BluetoothChatService(
     ) : Thread() {
 
         private val connectSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            val m = device.javaClass.getMethod(
-                "createInsecureRfcommSocketToServiceRecord", *arrayOf<Class<*>>(
-                    UUID::class.java
-                )
-            )
-            val uuid=device.uuids.toList()[0].uuid
-            m.invoke(device,uuid) as BluetoothSocket
-            //device.createInsecureRfcommSocketToServiceRecord(myUUID)
+//            val m = device.javaClass.getMethod(
+//                "createInsecureRfcommSocketToServiceRecord", *arrayOf<Class<*>>(
+//                    UUID::class.java
+//                )
+//            )
+//            val uuid=device.uuids.toList()[0].uuid
+//            m.invoke(device,uuid) as BluetoothSocket
+            device.createInsecureRfcommSocketToServiceRecord(myUUID)
         }
 
 

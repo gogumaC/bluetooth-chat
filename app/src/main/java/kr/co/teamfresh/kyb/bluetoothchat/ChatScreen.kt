@@ -38,13 +38,12 @@ fun ChatScreen(
         Column {
             Text("연결 가능한 기기 목록")
             Button(modifier=Modifier.align(Alignment.End),onClick = onBluetoothScan){
-                Text("기기 검색")
+                Text("기기 검색 허용")
             }
             Spacer(modifier = Modifier.size(8.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 items(service?.getPairedDeviceList() ?: listOf()) {
                     Button(onClick = {
-                        service?.start()
                         service?.connect(it.address)
                     }, modifier = Modifier.fillMaxWidth()) {
                         Column() {
