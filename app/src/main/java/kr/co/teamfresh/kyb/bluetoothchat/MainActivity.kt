@@ -132,7 +132,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             BluetoothChatTheme {
                 // A surface container using the 'background' color from the theme
-                ChatScreen(
+                ConnectScreen(
                     onBluetoothScan = {
                                       bluetoothScanLauncher.launch(discoverableIntent)
                     },

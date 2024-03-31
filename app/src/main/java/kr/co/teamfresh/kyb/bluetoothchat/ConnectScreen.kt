@@ -1,7 +1,6 @@
 package kr.co.teamfresh.kyb.bluetoothchat
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +23,7 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 
 @Composable
-fun ChatScreen(
+fun ConnectScreen(
     onBluetoothScan:()->Unit,
     onClickPlusButton: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,9 +59,9 @@ fun ChatScreen(
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun ChatScreenPreview() {
+fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ChatScreen({},{}, Modifier.fillMaxSize())
+        ConnectScreen({},{}, Modifier.fillMaxSize())
     }
 }
 
