@@ -20,8 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 @JvmName("PairedDeviceDialog")
 @Composable
@@ -83,4 +85,20 @@ fun BluetoothDeviceInfoUnit(deviceName: String, modifier: Modifier = Modifier) {
         text = deviceName,
         modifier = modifier.background(Color.Blue)
     )
+}
+
+@Preview
+@Composable
+fun PairedDeviceListDialogPreview() {
+    BluetoothChatTheme {
+        PairedDeviceDialog({}, onDismissRequest = { }, List(3) { "Device$it" })
+    }
+}
+
+@Preview
+@Composable
+fun BluetoothDeviceInfoUnitPreview() {
+    BluetoothChatTheme {
+        BluetoothDeviceInfoUnit(deviceName = "device1")
+    }
 }

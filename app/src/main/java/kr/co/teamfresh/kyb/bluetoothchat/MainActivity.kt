@@ -3,7 +3,10 @@ package kr.co.teamfresh.kyb.bluetoothchat
 import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -12,31 +15,39 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_READ
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_TOAST
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.MESSAGE_WRITE
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var bluetoothEnableLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothSettingLauncher: ActivityResultLauncher<Intent>
+
+    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
+
+    private val bluetoothPermissions = listOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.BLUETOOTH_SCAN
+    )
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -74,21 +85,26 @@ class MainActivity : ComponentActivity() {
             }
 
         bluetoothPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (isGranted) Toast.makeText(
-                    this,
-                    "bluetooth connect permission granted",
-                    Toast.LENGTH_SHORT
-                ).show()
-                else Toast.makeText(this, "bluetooth connect permission denied", Toast.LENGTH_SHORT)
-                    .show()
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+                val deniedList = result.filter { !it.value }.map { it.key }
 
+                if (deniedList.isNotEmpty()) {
+                    val map = deniedList.groupBy { permission ->
+                        if (shouldShowRequestPermissionRationale(permission)) "DENIED" else "EXPLAINED"
+                    }
+                    map["DENIED"]?.let {}
+                    map["EXPLAINED"]?.let {}
+                } else {
+
+                }
             }
-
         bluetoothSettingLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 
             }
+        bluetoothScanLauncher=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+
+        }
 
         //블루투스가 기기에서 지원되는지 확인
         if (bluetoothAdapter == null) {
@@ -109,11 +125,18 @@ class MainActivity : ComponentActivity() {
 
 
         val bluetoothSettingIntent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
+        val discoverableIntent=Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply{
+            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,300)
+        }
         service.getPairedDeviceList()
         setContent {
             BluetoothChatTheme {
                 // A surface container using the 'background' color from the theme
-                ChatScreen(onClickPlusButton = {
+                ChatScreen(
+                    onBluetoothScan = {
+                                      bluetoothScanLauncher.launch(discoverableIntent)
+                    },
+                    onClickPlusButton = {
                     bluetoothSettingLauncher.launch(
                         bluetoothSettingIntent
                     )
@@ -123,15 +146,29 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestBluetoothConnectPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) == PackageManager.PERMISSION_DENIED
-            ) {
-                bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+        val permissionList = mutableListOf<String>()
+
+        for (permission in bluetoothPermissions) {
+            val result = ContextCompat.checkSelfPermission(this, permission)
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(permission)
             }
         }
 
+        if (permissionList.isNotEmpty()) {
+            bluetoothPermissionLauncher.launch(permissionList.toTypedArray())
+        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//            if (ContextCompat.checkSelfPermission(
+//                    this,
+//                    Manifest.permission.BLUETOOTH_CONNECT
+//                ) == PackageManager.PERMISSION_DENIED
+//            ) {
+//                bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+//            }
+//        }
+
     }
+
+
 }
