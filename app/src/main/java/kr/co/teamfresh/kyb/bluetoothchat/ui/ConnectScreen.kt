@@ -1,5 +1,6 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
+import android.bluetooth.BluetoothDevice
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -33,18 +34,27 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 
 @Composable
 fun ConnectScreen(
-    onBluetoothScan: () -> Unit,
-    onClickPlusButton: () -> Unit,
     modifier: Modifier = Modifier,
     service: BluetoothChatService? = null
 ) {
 
+    ConnectLayout(onBluetoothScanRequst = { /*TODO*/ }, onClickPlusButton = { /*TODO*/ })
+}
+
+@Composable
+fun ConnectLayout(
+    modifier: Modifier = Modifier,
+    onBluetoothScanRequst: () -> Unit,
+    onClickPlusButton: () -> Unit,
+    service: BluetoothChatService? = null
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -56,11 +66,15 @@ fun ConnectScreen(
             items(service?.getPairedDeviceList() ?: listOf()) {
                 val name = it.name.toString()
                 val address = it.address
-                SwipeDeviceItem(name = name, macAddress = address, requestConnectDevice = {}, requestDeleteDevice = {})//service?.connect(it.address)
+                SwipeDeviceItem(
+                    name = name,
+                    macAddress = address,
+                    requestConnectDevice = {},
+                    requestDeleteDevice = {})//service?.connect(it.address)
             }
-            item{
+            item {
                 TextButton(onClick = { /*TODO*/ }) {
-                    Text(text = "+ 새 기기 연결하기",modifier=Modifier)
+                    Text(text = "+ 새 기기 연결하기", modifier = Modifier)
                 }
             }
         }
@@ -88,6 +102,7 @@ fun SwipeDeviceItem(
                     requestConnectDevice()
                     false
                 }
+
                 else -> true
             }
         })
@@ -149,11 +164,36 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String, macAddress:
 
 }
 
+@Composable
+fun ConnectableDeviceListDialog(
+    deviceList: List<BluetoothDevice>,
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        LazyColumn {
+            items(deviceList) {
+                BluetoothDeviceItem(name = it.name, macAddress = it.address)
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ConnectableDeviceListDialogPreview() {
+    BluetoothChatTheme {
+        Surface {
+            ConnectableDeviceListDialog(listOf()) {}
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen({}, {}, Modifier.fillMaxSize())
+        ConnectScreen()
     }
 }
 
