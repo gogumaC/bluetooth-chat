@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
@@ -50,27 +51,13 @@ fun ConnectScreen(
             .padding(16.dp)
     ) {
         Text("저장된 기기 목록")
-//            Button(modifier=Modifier.align(Alignment.End),onClick = onBluetoothScan){
-//                Text("기기 검색 허용")
-//            }
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            items(List(5) { "someone's device$it" to "123123" }) {
-                val name = it.first
-                val address = it.second
-                SwipeDeviceItem(name = name, macAddress = address, requestConnectDevice = {}, requestDeleteDevice = {})
+            items(service?.getPairedDeviceList() ?: listOf()) {
+                val name = it.name.toString()
+                val address = it.address
+                SwipeDeviceItem(name = name, macAddress = address, requestConnectDevice = {}, requestDeleteDevice = {})//service?.connect(it.address)
             }
-//                items(service?.getPairedDeviceList() ?: listOf()) {
-//
-//                    Button(onClick = {
-//                        service?.connect(it.address)
-//                    }, modifier = Modifier.fillMaxWidth()) {
-//                        Column() {
-//                            Text(text = it.name)
-//                            Text(text = it.address)
-//                        }
-//                    }
-//                }
         }
 
     }
