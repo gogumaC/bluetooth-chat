@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
         val service = BluetoothChatService(mHandler, this, bluetoothAdapter!!)
 
         //블루투스가 활성화 되어있는지 확인
-        if (bluetoothAdapter?.isEnabled == false) {
+        if (!bluetoothAdapter.isEnabled) {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             //startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT) -- deprecated
             bluetoothEnableLauncher.launch(enableBtIntent)
