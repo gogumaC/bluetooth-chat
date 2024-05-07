@@ -17,13 +17,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MailOutline
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,8 +58,12 @@ fun ConnectScreen(
                 val address = it.address
                 SwipeDeviceItem(name = name, macAddress = address, requestConnectDevice = {}, requestDeleteDevice = {})//service?.connect(it.address)
             }
+            item{
+                TextButton(onClick = { /*TODO*/ }) {
+                    Text(text = "+ 새 기기 연결하기",modifier=Modifier)
+                }
+            }
         }
-
     }
 }
 
