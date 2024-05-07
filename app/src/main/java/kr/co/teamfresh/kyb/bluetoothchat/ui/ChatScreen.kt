@@ -1,18 +1,16 @@
-package kr.co.teamfresh.kyb.bluetoothchat
+package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
@@ -30,12 +28,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon.Companion.Text
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun ChatScreen(modifier: Modifier = Modifier) {
@@ -46,8 +47,8 @@ fun ChatScreen(modifier: Modifier = Modifier) {
             .background(Color.Blue)
     ) {
         Column {
-            LazyColumn(modifier = Modifier, verticalArrangement = Arrangement.spacedBy(5.dp)){
-                items(List(5){it.toString()}){
+            LazyColumn(modifier = Modifier, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                items(List(5) { it.toString() }) {
                     TalkUnit(text = it)
                 }
             }
@@ -60,11 +61,33 @@ fun ChatScreen(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun Talk(modifier: Modifier = Modifier) {
+    Row(modifier = modifier) {
+        DeviceBadge(deviceName = "hello")
+        TalkUnit("HELLO")
+    }
+}
 
 @Composable
-fun TalkUnit(text:String,modifier: Modifier=Modifier){
-    Box(modifier = modifier.background(Color.LightGray)){
-        Text(modifier=Modifier.padding(10.dp),text=text)
+fun DeviceBadge(modifier: Modifier = Modifier, deviceName: String) {
+    Card(modifier = modifier.size(32.dp)) {
+        Text(
+            modifier = Modifier.fillMaxSize(),
+            text = deviceName[0].toString(),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+    }
+
+}
+
+@Composable
+fun TalkUnit(text: String, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.background(Color.LightGray)) {
+        Text(modifier = Modifier.padding(10.dp), text = text)
     }
 
 }
@@ -101,9 +124,9 @@ fun ChatInput(
 
 @Preview(showBackground = true)
 @Composable
-fun TalkUnitPreview(){
+fun TalkPreview() {
     BluetoothChatTheme {
-        TalkUnit(text = "HELLO".repeat(20))
+        Talk()
     }
 }
 

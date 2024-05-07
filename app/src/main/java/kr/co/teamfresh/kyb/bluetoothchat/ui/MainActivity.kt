@@ -1,15 +1,11 @@
-package kr.co.teamfresh.kyb.bluetoothchat
+package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -22,7 +18,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ

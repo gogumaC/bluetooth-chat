@@ -1,4 +1,4 @@
-package kr.co.teamfresh.kyb.bluetoothchat
+package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
