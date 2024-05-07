@@ -2,11 +2,13 @@ package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.bluetooth.BluetoothDevice
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,6 +31,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -44,8 +50,12 @@ fun ConnectScreen(
     modifier: Modifier = Modifier,
     service: BluetoothChatService? = null
 ) {
+    var showDialog by remember { mutableStateOf(false)}
+    Box {
+        ConnectLayout(onBluetoothScanRequst = { showDialog=true }, onClickPlusButton = { /*TODO*/ })
+        if(showDialog) ConnectableDeviceListDialog(deviceList = listOf(), onDismiss = {showDialog=false})
+    }
 
-    ConnectLayout(onBluetoothScanRequst = { /*TODO*/ }, onClickPlusButton = { /*TODO*/ })
 }
 
 @Composable
@@ -73,7 +83,7 @@ fun ConnectLayout(
                     requestDeleteDevice = {})//service?.connect(it.address)
             }
             item {
-                TextButton(onClick = { /*TODO*/ }) {
+                TextButton(onClick = { onBluetoothScanRequst() }) {
                     Text(text = "+ 새 기기 연결하기", modifier = Modifier)
                 }
             }
@@ -171,9 +181,13 @@ fun ConnectableDeviceListDialog(
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        LazyColumn {
-            items(deviceList) {
-                BluetoothDeviceItem(name = it.name, macAddress = it.address)
+        Card(modifier=modifier.aspectRatio(0.7f)) {
+            Text("연결 가능한 기기 목록",modifier=Modifier.padding(16.dp))
+            HorizontalDivider()
+            LazyColumn {
+                items(deviceList) {
+                    BluetoothDeviceItem(name = it.name, macAddress = it.address)
+                }
             }
         }
     }
