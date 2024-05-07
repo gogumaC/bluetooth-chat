@@ -1,4 +1,4 @@
-package kr.co.teamfresh.kyb.bluetoothchat
+package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice

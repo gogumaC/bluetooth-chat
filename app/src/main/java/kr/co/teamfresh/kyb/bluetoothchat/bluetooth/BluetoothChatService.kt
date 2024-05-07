@@ -136,6 +136,7 @@ class BluetoothChatService(
     }
 
 
+    @SuppressLint("MissingPermission")
     private inner class AcceptThread : Thread() {
         private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
             bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, myUUID)
@@ -183,13 +184,6 @@ class BluetoothChatService(
     ) : Thread() {
 
         private val connectSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
-//            val m = device.javaClass.getMethod(
-//                "createInsecureRfcommSocketToServiceRecord", *arrayOf<Class<*>>(
-//                    UUID::class.java
-//                )
-//            )
-//            val uuid=device.uuids.toList()[0].uuid
-//            m.invoke(device,uuid) as BluetoothSocket
             device.createInsecureRfcommSocketToServiceRecord(myUUID)
         }
 
@@ -198,38 +192,9 @@ class BluetoothChatService(
             Log.d(TAG, "Begin ConnectThread ${device.bondState==BluetoothDevice.BOND_BONDED} | $myUUID")
 
             Log.d(TAG,"Try connect : ")
-            val a=connectSocket?.isConnected
-//                val clazz=connectSocket!!.remoteDevice.javaClass
-//                val paramTypes= arrayOf<Class<*>>(Integer.TYPE)
-//                val m=clazz.getMethod("createRfcommSocket",*paramTypes)
-//                val fallbackSocket=m.invoke(connectSocket!!.remoteDevice,Integer.valueOf(1)) as BluetoothSocket
-//            fallbackSocket.connect()
 
             connectSocket?.connect()
             Log.d(TAG,"Connect success")
-//                connectSocket?.let {
-//                    val connectedThread = ConnectedThread(it)
-//                }
-
-//            try {
-//                Log.d(TAG,"Try connect : ")
-////                val clazz=connectSocket!!.remoteDevice.javaClass
-////                val paramTypes= arrayOf<Class<*>>(Integer.TYPE)
-////                val m=clazz.getMethod("createRfcommSocket",*paramTypes)
-////                val fallbackSocket=m.invoke(connectSocket!!.remoteDevice,Integer.valueOf(1)) as BluetoothSocket
-////                fallbackSocket.connect()
-//                connectSocket?.connect()
-//                Log.d(TAG,"Connect success")
-////                connectSocket?.let {
-////                    val connectedThread = ConnectedThread(it)
-////                }
-//            } catch (e: IOException) {
-//                connectSocket?.close()
-//                Log.d(TAG,"Connect failed and Socket closed")
-//                throw Exception("connect fail"+e)
-//            }
-
-            //connectSocket?.let { connected(connectSocket!!, device) }
         }
 
         fun cancel() {
