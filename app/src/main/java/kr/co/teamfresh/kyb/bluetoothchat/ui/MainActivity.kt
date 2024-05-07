@@ -71,12 +71,11 @@ class MainActivity : ComponentActivity() {
 
         bluetoothEnableLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
+                if (result.resultCode == RESULT_OK) {
                     Toast.makeText(this, "Bluetooth enabled", Toast.LENGTH_SHORT).show()
-                } else if (result.resultCode == Activity.RESULT_CANCELED) {
+                } else if (result.resultCode == RESULT_CANCELED) {
                     Toast.makeText(this, "bluetooth not enable", Toast.LENGTH_SHORT).show()
                 }
-
             }
 
         bluetoothPermissionLauncher =
