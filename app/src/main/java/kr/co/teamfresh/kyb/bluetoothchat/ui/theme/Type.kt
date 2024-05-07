@@ -9,12 +9,12 @@ import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
 
 val jamsil=FontFamily(
-    Font(R.font.the_jamsil_light),
-    Font(R.font.the_jamsil_thin),
-    Font(R.font.the_jamsil_regular),
-    Font(R.font.the_jamsil_medium),
-    Font(R.font.the_jamsil_bold),
-    Font(R.font.the_jamsil_extrabold)
+    Font(R.font.the_jamsil_light, weight = FontWeight(100)),
+    Font(R.font.the_jamsil_thin, weight = FontWeight(300)),
+    Font(R.font.the_jamsil_regular, weight = FontWeight(400)),
+    Font(R.font.the_jamsil_medium,weight=FontWeight(500)),
+    Font(R.font.the_jamsil_bold,weight=FontWeight(700)),
+    Font(R.font.the_jamsil_extrabold,weight=FontWeight(800))
 )
 
 // Set of Material typography styles to start with
