@@ -5,11 +5,16 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,10 +37,11 @@ class BluetoothChatService(
     private var mConnectThread: ConnectThread? = null
     private var mAcceptThread: AcceptThread? = null
 
-    private val myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//"8CE255C0-200A-11E0-AC64-0800200C9A66")
-    private val NAME="BluetoothChat"
+    private val myUUID =
+        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//"8CE255C0-200A-11E0-AC64-0800200C9A66")
+    private val NAME = "BluetoothChat"
 
-    init{
+    init {
         start()
     }
 
@@ -52,7 +58,7 @@ class BluetoothChatService(
             mConnectedThread = null
         }
         if (mAcceptThread == null) {
-            mAcceptThread= AcceptThread().apply{start()}
+            mAcceptThread = AcceptThread().apply { start() }
         }
 
     }
@@ -73,12 +79,12 @@ class BluetoothChatService(
 
 
         val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
-        try{
+        try {
             mConnectThread = ConnectThread(myUUID, device).apply {
                 start()
             }
-        }catch(e:Exception){
-            Log.d(TAG,"connect fail : $e")
+        } catch (e: Exception) {
+            Log.d(TAG, "connect fail : $e")
 
         }
 
@@ -86,7 +92,7 @@ class BluetoothChatService(
 
     fun connected(socket: BluetoothSocket, device: BluetoothDevice) {
 
-        Log.d(TAG,"connected $device")
+        Log.d(TAG, "connected $device")
 
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
@@ -96,9 +102,9 @@ class BluetoothChatService(
             mConnectedThread!!.cancel()
             mConnectedThread = null
         }
-        if(mAcceptThread!=null){
+        if (mAcceptThread != null) {
             mAcceptThread!!.cancel()
-            mAcceptThread=null
+            mAcceptThread = null
         }
         mConnectedThread = ConnectedThread(socket).apply {
             start()
@@ -121,9 +127,9 @@ class BluetoothChatService(
             mConnectedThread!!.cancel();
             mConnectedThread = null;
         }
-        if(mAcceptThread!=null){
+        if (mAcceptThread != null) {
             mAcceptThread!!.cancel()
-            mAcceptThread=null
+            mAcceptThread = null
         }
     }
 
@@ -145,7 +151,7 @@ class BluetoothChatService(
 
         override fun run() {
 
-            name="AcceptThread"
+            name = "AcceptThread"
             Log.d(TAG, "Socket's accept() method start")
             var shouldLoop = true
             while (shouldLoop) {
@@ -159,7 +165,7 @@ class BluetoothChatService(
 
                 socket?.also {
                     //manageMyConnectedSocket(it)
-                    connected(it,it.remoteDevice)
+                    connected(it, it.remoteDevice)
                     mmServerSocket?.close()
                     shouldLoop = false
                 }
@@ -188,12 +194,15 @@ class BluetoothChatService(
 
 
         override fun run() {
-            Log.d(TAG, "Begin ConnectThread ${device.bondState==BluetoothDevice.BOND_BONDED} | $myUUID")
+            Log.d(
+                TAG,
+                "Begin ConnectThread ${device.bondState == BluetoothDevice.BOND_BONDED} | $myUUID"
+            )
 
-            Log.d(TAG,"Try connect : ")
+            Log.d(TAG, "Try connect : ")
 
             connectSocket?.connect()
-            Log.d(TAG,"Connect success")
+            Log.d(TAG, "Connect success")
         }
 
         fun cancel() {
@@ -260,9 +269,6 @@ class BluetoothChatService(
             }
         }
     }
-
-
-
 
 
 }

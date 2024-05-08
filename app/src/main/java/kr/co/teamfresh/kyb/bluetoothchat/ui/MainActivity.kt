@@ -3,14 +3,20 @@ package kr.co.teamfresh.kyb.bluetoothchat.ui
 import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -42,9 +48,28 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.BLUETOOTH_SCAN
     )
 
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(p0: Context?, p1: Intent?) {
+            val action = p1?.action
+            when (action) {
+                BluetoothDevice.ACTION_FOUND -> {
+                    val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
+                        BluetoothDevice.EXTRA_DEVICE,
+                        BluetoothDevice::class.java
+                    ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+
+                    Log.d("bluetoothDevice",device.toString())
+                }
+            }
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val filter=IntentFilter(BluetoothDevice.ACTION_FOUND)
+        registerReceiver(receiver,filter)
 
         val mHandler = object : Handler(Looper.getMainLooper()) {
             override fun handleMessage(msg: Message) {
@@ -96,9 +121,10 @@ class MainActivity : ComponentActivity() {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 
             }
-        bluetoothScanLauncher=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+        bluetoothScanLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
 
-        }
+            }
 
         //블루투스가 기기에서 지원되는지 확인
         if (bluetoothAdapter == null) {
@@ -118,9 +144,11 @@ class MainActivity : ComponentActivity() {
         }
 
 
+
+
         val bluetoothSettingIntent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-        val discoverableIntent=Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply{
-            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,300)
+        val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
         }
         service.getPairedDeviceList()
         setContent {
@@ -135,7 +163,14 @@ class MainActivity : ComponentActivity() {
 //                        bluetoothSettingIntent
 //                    )
 //                },
-            Modifier.fillMaxSize(), service)
+                    modifier=Modifier.fillMaxSize(),
+                    service = service,
+                    onBluetoothDeviceScanRequest = {
+                        if(!bluetoothAdapter.isDiscovering)
+                            bluetoothAdapter.startDiscovery()
+                    }
+
+                )
             }
         }
     }
@@ -165,5 +200,8 @@ class MainActivity : ComponentActivity() {
 
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(receiver)
+    }
 }

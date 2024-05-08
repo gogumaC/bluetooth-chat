@@ -1,8 +1,11 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,21 +51,29 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 @Composable
 fun ConnectScreen(
     modifier: Modifier = Modifier,
-    service: BluetoothChatService? = null
+    service: BluetoothChatService? = null,
+    onBluetoothDeviceScanRequest: () -> Unit,
 ) {
+
+
+
+
+
     var showDialog by remember { mutableStateOf(false)}
     Box {
-        ConnectLayout(onBluetoothScanRequst = { showDialog=true }, onClickPlusButton = { /*TODO*/ })
+        ConnectLayout(onBluetoothScanRequest = {
+            showDialog=true
+            onBluetoothDeviceScanRequest()
+        })
         if(showDialog) ConnectableDeviceListDialog(deviceList = listOf(), onDismiss = {showDialog=false})
     }
-
 }
+
 
 @Composable
 fun ConnectLayout(
     modifier: Modifier = Modifier,
-    onBluetoothScanRequst: () -> Unit,
-    onClickPlusButton: () -> Unit,
+    onBluetoothScanRequest: () -> Unit,
     service: BluetoothChatService? = null
 ) {
     Column(
@@ -83,7 +94,7 @@ fun ConnectLayout(
                     requestDeleteDevice = {})//service?.connect(it.address)
             }
             item {
-                TextButton(onClick = { onBluetoothScanRequst() }) {
+                TextButton(onClick = { onBluetoothScanRequest() }) {
                     Text(text = "+ 새 기기 연결하기", modifier = Modifier)
                 }
             }
@@ -207,7 +218,7 @@ fun ConnectableDeviceListDialogPreview() {
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen()
+        ConnectScreen(onBluetoothDeviceScanRequest = {})
     }
 }
 
