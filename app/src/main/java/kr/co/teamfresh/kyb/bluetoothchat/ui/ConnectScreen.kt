@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.foundation.lazy.items
@@ -23,7 +24,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -191,9 +194,20 @@ fun ConnectableDeviceListDialog(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
+
+    val isFinding by remember{ mutableStateOf(true) }
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier=modifier.aspectRatio(0.7f)) {
-            Text("연결 가능한 기기 목록",modifier=Modifier.padding(16.dp))
+            Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("연결 가능한 기기 목록",modifier=Modifier.padding(16.dp))
+                if(isFinding) {
+                    CircularProgressIndicator(modifier = Modifier.padding(16.dp).size(28.dp))
+                }else{
+                    Button(onClick = { /*TODO*/ },modifier=Modifier.padding(10.dp)) {
+                        Text(text = "다시 탐색")
+                    }
+                }
+            }
             HorizontalDivider()
             LazyColumn {
                 items(deviceList) {
