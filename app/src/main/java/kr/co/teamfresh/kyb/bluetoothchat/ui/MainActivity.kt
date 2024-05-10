@@ -48,28 +48,9 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.BLUETOOTH_SCAN
     )
 
-    val receiver = object : BroadcastReceiver() {
-        override fun onReceive(p0: Context?, p1: Intent?) {
-            val action = p1?.action
-            when (action) {
-                BluetoothDevice.ACTION_FOUND -> {
-                    val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
-                        BluetoothDevice.EXTRA_DEVICE,
-                        BluetoothDevice::class.java
-                    ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-
-                    Log.d("bluetoothDevice",device.toString())
-                }
-            }
-        }
-    }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val filter=IntentFilter(BluetoothDevice.ACTION_FOUND)
-        registerReceiver(receiver,filter)
 
         val mHandler = object : Handler(Looper.getMainLooper()) {
             override fun handleMessage(msg: Message) {
@@ -198,10 +179,5 @@ class MainActivity : ComponentActivity() {
 //            }
 //        }
 
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(receiver)
     }
 }

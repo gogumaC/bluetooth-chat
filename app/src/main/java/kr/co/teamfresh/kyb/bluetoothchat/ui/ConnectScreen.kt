@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,6 +55,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.findActivity
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 
@@ -81,11 +83,19 @@ fun ConnectScreen(
             }
         }
     }
+    val filter=IntentFilter(BluetoothDevice.ACTION_FOUND)
     when(currentState.value){
         Lifecycle.State.CREATED->{
-
+            LocalContext.current.findActivity().apply{
+                registerReceiver(receiver,filter)
+            }
         }
-        Lifecycle.State.DESTROYED->{}
+        Lifecycle.State.DESTROYED->{
+            LocalContext.current.findActivity().apply{
+                unregisterReceiver(receiver)
+            }
+        }
+        else->{}
     }
     
     var showDialog by remember { mutableStateOf(false)}
