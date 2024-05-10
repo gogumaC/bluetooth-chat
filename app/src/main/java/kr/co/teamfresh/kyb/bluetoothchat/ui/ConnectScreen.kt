@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -44,9 +46,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
@@ -58,10 +64,30 @@ fun ConnectScreen(
     onBluetoothDeviceScanRequest: () -> Unit,
 ) {
 
+    val lifecycleOwner= LocalLifecycleOwner.current
+    val currentState = lifecycleOwner.lifecycle.currentStateAsState()
+    val receiver=object:BroadcastReceiver(){
+        override fun onReceive(p0: Context?, p1: Intent?) {
+            val action=p1?.action
+            when (action) {
+                BluetoothDevice.ACTION_FOUND -> {
+                    val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
+                        BluetoothDevice.EXTRA_DEVICE,
+                        BluetoothDevice::class.java
+                    ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
 
+                    Log.d("bluetoothDevice",device.toString())
+                }
+            }
+        }
+    }
+    when(currentState.value){
+        Lifecycle.State.CREATED->{
 
-
-
+        }
+        Lifecycle.State.DESTROYED->{}
+    }
+    
     var showDialog by remember { mutableStateOf(false)}
     Box {
         ConnectLayout(onBluetoothScanRequest = {
@@ -201,7 +227,9 @@ fun ConnectableDeviceListDialog(
             Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("연결 가능한 기기 목록",modifier=Modifier.padding(16.dp))
                 if(isFinding) {
-                    CircularProgressIndicator(modifier = Modifier.padding(16.dp).size(28.dp))
+                    CircularProgressIndicator(modifier = Modifier
+                        .padding(16.dp)
+                        .size(28.dp))
                 }else{
                     Button(onClick = { /*TODO*/ },modifier=Modifier.padding(10.dp)) {
                         Text(text = "다시 탐색")
