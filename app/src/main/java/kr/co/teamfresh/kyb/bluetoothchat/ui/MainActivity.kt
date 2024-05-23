@@ -1,16 +1,10 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.Manifest
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -36,7 +30,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var bluetoothEnableLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothSettingLauncher: ActivityResultLauncher<Intent>
-
     private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
 
     private val bluetoothPermissions = listOf(
@@ -147,8 +140,11 @@ class MainActivity : ComponentActivity() {
                     modifier=Modifier.fillMaxSize(),
                     service = service,
                     onBluetoothDeviceScanRequest = {
-                        if(!bluetoothAdapter.isDiscovering)
-                            bluetoothAdapter.startDiscovery()
+                        Log.d("checkfor","${bluetoothAdapter.isDiscovering} findStart!")
+                        if(!bluetoothAdapter.isDiscovering) {
+                            val res = bluetoothAdapter.startDiscovery()
+                            Log.d("checkfor","start res: $res")
+                        }
                     }
 
                 )
