@@ -33,6 +33,16 @@ class BluetoothChatService(
     val bluetoothAdapter: BluetoothAdapter
 ) {
 
+    companion object{
+        const val STATE_NONE=0
+        const val STATE_DISCOVERING=1
+        const val STATE_DISCOVERING_FINISHED=2
+        const val STATE_CONNECTING=3
+        const val STATE_CONNECTED=4
+        const val STATE_DISCONNECTED=5
+    }
+    var state:Int=0
+        private set
     private var mConnectedThread: ConnectedThread? = null
     private var mConnectThread: ConnectThread? = null
     private var mAcceptThread: AcceptThread? = null

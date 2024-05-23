@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.DisposableEffectScope
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,6 +88,8 @@ fun ConnectScreen(
             onBluetoothDeviceScanRequest()
         }
     }
+
+    var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
     val discoverableIntent = remember {
         Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
             putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 20)
@@ -112,9 +115,11 @@ fun ConnectScreen(
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED->{
                     Log.d("checkfor","start discovering")
+                    bluetoothDiscoveringState=BluetoothChatService.STATE_DISCOVERING
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED->{
                     Log.d("checkfor","finish discovering")
+                    bluetoothDiscoveringState=BluetoothChatService.STATE_DISCOVERING_FINISHED
                 }
             }
         }
@@ -152,7 +157,9 @@ fun ConnectScreen(
         })
         if (showDialog) ConnectableDeviceListDialog(
             deviceList = discoveredDevices.toList(),
-            onDismiss = { showDialog = false })
+            bluetoothDiscoveringState=bluetoothDiscoveringState,
+            onDismiss = { showDialog = false }
+        )
     }
 }
 
@@ -274,11 +281,12 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress
 @Composable
 fun ConnectableDeviceListDialog(
     deviceList: List<BluetoothDevice>,
+    bluetoothDiscoveringState:Int,
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
 
-    val isFinding by remember { mutableStateOf(true) }
+    val isFinding =(bluetoothDiscoveringState==BluetoothChatService.STATE_DISCOVERING)
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier = modifier.aspectRatio(0.7f)) {
             Row(
@@ -314,7 +322,7 @@ fun ConnectableDeviceListDialog(
 fun ConnectableDeviceListDialogPreview() {
     BluetoothChatTheme {
         Surface {
-            ConnectableDeviceListDialog(listOf()) {}
+            ConnectableDeviceListDialog(listOf(),BluetoothChatService.STATE_DISCOVERING) {}
         }
     }
 }
