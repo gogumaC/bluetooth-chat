@@ -301,10 +301,6 @@ fun ConnectableDeviceListDialog(
                             .padding(16.dp)
                             .size(28.dp)
                     )
-                } else {
-                    Button(onClick = { /*TODO*/ }, modifier = Modifier.padding(10.dp)) {
-                        Text(text = "다시 탐색")
-                    }
                 }
             }
             HorizontalDivider()
