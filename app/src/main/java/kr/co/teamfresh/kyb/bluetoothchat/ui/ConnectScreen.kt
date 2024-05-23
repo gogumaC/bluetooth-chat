@@ -87,10 +87,21 @@ fun ConnectScreen(
                         }
                     }
                 }
+                BluetoothAdapter.ACTION_DISCOVERY_STARTED->{
+                    
+                }
+                BluetoothAdapter.ACTION_DISCOVERY_FINISHED->{
+
+                }
             }
         }
     }
-    val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+    val filter = IntentFilter().apply{
+        addAction(BluetoothDevice.ACTION_FOUND)
+        addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+    }
+
     when (currentState.value) {
         Lifecycle.State.CREATED -> {
             LocalContext.current.findActivity().apply {
