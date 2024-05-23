@@ -39,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,48 +67,57 @@ fun ConnectScreen(
     onBluetoothDeviceScanRequest: () -> Unit,
 ) {
 
-    val lifecycleOwner= LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val currentState = lifecycleOwner.lifecycle.currentStateAsState()
-    val receiver=object:BroadcastReceiver(){
+    var discoveredDevices by remember { mutableStateOf(listOf<BluetoothDevice>()) }
+    val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
-            val action=p1?.action
+            val action = p1?.action
             when (action) {
                 BluetoothDevice.ACTION_FOUND -> {
                     val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
                     ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-
-                    Log.d("bluetoothDevice",device.toString())
+                    Log.d("checkfor","foundedDevice : ${device?.name} ${device?.address}")
+                    device?.let{
+                        discoveredDevices= mutableListOf<BluetoothDevice>().apply{
+                            addAll(discoveredDevices)
+                            add(device)
+                        }
+                    }
                 }
             }
         }
     }
-    val filter=IntentFilter(BluetoothDevice.ACTION_FOUND)
-    when(currentState.value){
-        Lifecycle.State.CREATED->{
-            LocalContext.current.findActivity().apply{
-                registerReceiver(receiver,filter)
+    val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+    when (currentState.value) {
+        Lifecycle.State.CREATED -> {
+            LocalContext.current.findActivity().apply {
+                registerReceiver(receiver, filter)
             }
         }
-        Lifecycle.State.DESTROYED->{
-            LocalContext.current.findActivity().apply{
+
+        Lifecycle.State.DESTROYED -> {
+            LocalContext.current.findActivity().apply {
                 unregisterReceiver(receiver)
             }
         }
-        else->{}
+
+        else -> {}
     }
-    
-    var showDialog by remember { mutableStateOf(false)}
+
+    var showDialog by remember { mutableStateOf(false) }
     Box {
         ConnectLayout(onBluetoothScanRequest = {
-            showDialog=true
+            showDialog = true
             onBluetoothDeviceScanRequest()
         })
-        if(showDialog) ConnectableDeviceListDialog(deviceList = listOf(), onDismiss = {showDialog=false})
+        if (showDialog) ConnectableDeviceListDialog(
+            deviceList = discoveredDevices,
+            onDismiss = { showDialog = false })
     }
 }
-
 
 @Composable
 fun ConnectLayout(
@@ -124,7 +134,7 @@ fun ConnectLayout(
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             items(service?.getPairedDeviceList() ?: listOf()) {
-                val name = it.name.toString()
+                val name = it.name
                 val address = it.address
                 SwipeDeviceItem(
                     name = name,
@@ -145,7 +155,7 @@ fun ConnectLayout(
 @Composable
 fun SwipeDeviceItem(
     modifier: Modifier = Modifier,
-    name: String,
+    name: String?,
     macAddress: String,
     requestDeleteDevice: () -> Unit,
     requestConnectDevice: () -> Unit
@@ -203,7 +213,7 @@ fun SwipeDeviceItem(
 }
 
 @Composable
-fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String, macAddress: String) {
+fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress: String) {
     Surface(
         modifier = modifier
             .height(48.dp)
@@ -217,7 +227,7 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String, macAddress:
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = name)
+            Text(text = name?:"NO name")
             Text(text = macAddress)
         }
     }
@@ -231,17 +241,23 @@ fun ConnectableDeviceListDialog(
     onDismiss: () -> Unit
 ) {
 
-    val isFinding by remember{ mutableStateOf(true) }
+    val isFinding by remember { mutableStateOf(true) }
     Dialog(onDismissRequest = onDismiss) {
-        Card(modifier=modifier.aspectRatio(0.7f)) {
-            Row(modifier=Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("연결 가능한 기기 목록",modifier=Modifier.padding(16.dp))
-                if(isFinding) {
-                    CircularProgressIndicator(modifier = Modifier
-                        .padding(16.dp)
-                        .size(28.dp))
-                }else{
-                    Button(onClick = { /*TODO*/ },modifier=Modifier.padding(10.dp)) {
+        Card(modifier = modifier.aspectRatio(0.7f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("연결 가능한 기기 목록", modifier = Modifier.padding(16.dp))
+                if (isFinding) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(28.dp)
+                    )
+                } else {
+                    Button(onClick = { /*TODO*/ }, modifier = Modifier.padding(10.dp)) {
                         Text(text = "다시 탐색")
                     }
                 }
