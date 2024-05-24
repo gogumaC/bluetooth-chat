@@ -1,5 +1,6 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.bluetooth.BluetoothAdapter
@@ -15,7 +16,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,22 +84,11 @@ fun ConnectScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentState = lifecycleOwner.lifecycle.currentStateAsState()
     var discoveredDevices by remember { mutableStateOf(setOf<BluetoothDevice>()) }
-    val discoverableLauncher=
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()){ result->
-            Log.d("checkfor","${result.resultCode} $result")
-        if(result.resultCode!= RESULT_CANCELED){
-            onBluetoothDeviceScanRequest()
-        }
-    }
 
     var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
-    val discoverableIntent = remember {
-        Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 20)
-        }
-    }
 
     val receiver = object : BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
         override fun onReceive(p0: Context?, p1: Intent?) {
             val action = p1?.action
             when (action) {
@@ -105,41 +97,45 @@ fun ConnectScreen(
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
                     ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    Log.d("checkfor","foundedDevice : ${device?.name} ${device?.address}")
-                    device?.let{
-                        discoveredDevices= mutableSetOf<BluetoothDevice>().apply{
+                    Log.d("checkfor", "foundedDevice : ${device?.name} ${device?.address}")
+                    device?.let {
+                        discoveredDevices = mutableSetOf<BluetoothDevice>().apply {
                             addAll(discoveredDevices)
                             add(device)
                         }
                     }
                 }
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED->{
-                    Log.d("checkfor","start discovering")
-                    bluetoothDiscoveringState=BluetoothChatService.STATE_DISCOVERING
+
+                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                    Log.d("checkfor", "start discovering")
+                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING
                 }
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED->{
-                    Log.d("checkfor","finish discovering")
-                    bluetoothDiscoveringState=BluetoothChatService.STATE_DISCOVERING_FINISHED
+
+                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                    Log.d("checkfor", "finish discovering")
+                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING_FINISHED
                 }
             }
         }
     }
-    val filter = IntentFilter().apply{
+    val filter = IntentFilter().apply {
         addAction(BluetoothDevice.ACTION_FOUND)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
     }
-    val context= LocalContext.current
+    val context = LocalContext.current
     DisposableEffect(currentState) {
-        val observer=LifecycleEventObserver{_,event->
-            when(event){
-                Lifecycle.Event.ON_CREATE->{
-                    context.findActivity().registerReceiver(receiver,filter)
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> {
+                    context.findActivity().registerReceiver(receiver, filter)
                 }
-                Lifecycle.Event.ON_DESTROY->{
+
+                Lifecycle.Event.ON_DESTROY -> {
                     context.findActivity().unregisterReceiver(receiver)
                 }
-                else->{}
+
+                else -> {}
             }
 
         }
@@ -153,16 +149,20 @@ fun ConnectScreen(
     Box {
         ConnectLayout(onBluetoothScanRequest = {
             showDialog = true
-            discoverableLauncher.launch(discoverableIntent)
+            onBluetoothDeviceScanRequest()
         })
         if (showDialog) ConnectableDeviceListDialog(
             deviceList = discoveredDevices.toList(),
-            bluetoothDiscoveringState=bluetoothDiscoveringState,
-            onDismiss = { showDialog = false }
+            bluetoothDiscoveringState = bluetoothDiscoveringState,
+            onDismiss = { showDialog = false },
+            onSelectDevice = {
+
+            }
         )
     }
 }
 
+@SuppressLint("MissingPermission")
 @Composable
 fun ConnectLayout(
     modifier: Modifier = Modifier,
@@ -271,22 +271,24 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = name?:"NO name")
+            Text(text = name ?: "NO name")
             Text(text = macAddress)
         }
     }
 
 }
 
+@SuppressLint("MissingPermission")
 @Composable
 fun ConnectableDeviceListDialog(
     deviceList: List<BluetoothDevice>,
-    bluetoothDiscoveringState:Int,
+    bluetoothDiscoveringState: Int,
+    onSelectDevice: (BluetoothDevice) -> Unit,
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
-
-    val isFinding =(bluetoothDiscoveringState==BluetoothChatService.STATE_DISCOVERING)
+    var selectedDevice by remember { mutableStateOf<BluetoothDevice?>(null) }
+    val isFinding = (bluetoothDiscoveringState == BluetoothChatService.STATE_DISCOVERING)
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier = modifier.aspectRatio(0.7f)) {
             Row(
@@ -306,7 +308,18 @@ fun ConnectableDeviceListDialog(
             HorizontalDivider()
             LazyColumn {
                 items(deviceList) {
-                    BluetoothDeviceItem(name = it.name, macAddress = it.address)
+                    val itemModifier = if (selectedDevice == it) {
+                        Modifier.border(2.dp, Color.Blue)
+                    } else {
+                        Modifier
+                    }
+                    Surface(onClick = {
+                        selectedDevice = it
+                        onSelectDevice(it)
+                    }, itemModifier) {
+                        BluetoothDeviceItem(name = it.name, macAddress = it.address)
+                    }
+
                 }
             }
         }
@@ -318,7 +331,10 @@ fun ConnectableDeviceListDialog(
 fun ConnectableDeviceListDialogPreview() {
     BluetoothChatTheme {
         Surface {
-            ConnectableDeviceListDialog(listOf(),BluetoothChatService.STATE_DISCOVERING) {}
+            ConnectableDeviceListDialog(
+                listOf(),
+                BluetoothChatService.STATE_DISCOVERING,
+                onSelectDevice = {}) {}
         }
     }
 }
