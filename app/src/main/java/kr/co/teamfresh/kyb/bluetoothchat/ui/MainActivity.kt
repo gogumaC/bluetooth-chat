@@ -1,6 +1,7 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -67,7 +69,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
 
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
         val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter

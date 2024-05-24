@@ -87,6 +87,7 @@ fun ConnectScreen(
 
     var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
 
+
     val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -147,10 +148,12 @@ fun ConnectScreen(
 
     var showDialog by remember { mutableStateOf(false) }
     Box {
-        ConnectLayout(onBluetoothScanRequest = {
-            showDialog = true
-            onBluetoothDeviceScanRequest()
-        })
+        ConnectLayout(
+            service = service,
+            onBluetoothScanRequest = {
+                showDialog = true
+                onBluetoothDeviceScanRequest()
+            })
         if (showDialog) ConnectableDeviceListDialog(
             deviceList = discoveredDevices.toList(),
             bluetoothDiscoveringState = bluetoothDiscoveringState,
@@ -183,8 +186,8 @@ fun ConnectLayout(
                 SwipeDeviceItem(
                     name = name,
                     macAddress = address,
-                    requestConnectDevice = {},
-                    requestDeleteDevice = {})//service?.connect(it.address)
+                    requestConnectDevice = { service?.connect(address) },
+                    requestDeleteDevice = {})
             }
             item {
                 TextButton(onClick = { onBluetoothScanRequest() }) {
