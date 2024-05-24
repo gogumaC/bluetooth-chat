@@ -156,7 +156,7 @@ fun ConnectScreen(
             bluetoothDiscoveringState = bluetoothDiscoveringState,
             onDismiss = { showDialog = false },
             onSelectDevice = {
-
+                service?.connect(it.address)
             }
         )
     }

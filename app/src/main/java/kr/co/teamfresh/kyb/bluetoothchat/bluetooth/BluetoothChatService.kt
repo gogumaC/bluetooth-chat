@@ -73,9 +73,11 @@ class BluetoothChatService(
 
     }
 
-    //@SuppressLint("MissingPermission")
+
+    @SuppressLint("MissingPermission")
     fun connect(deviceAddress: String) {
-        Log.d(TAG, "connect to: " + deviceAddress);
+        Log.d(TAG, "connect to: " + deviceAddress)
+
 
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
@@ -85,18 +87,24 @@ class BluetoothChatService(
             mConnectedThread!!.cancel()
             mConnectedThread = null
         }
-        //if (bluetoothAdapter.isDiscovering) bluetoothAdapter.cancelDiscovery()
+        if (bluetoothAdapter.isDiscovering) bluetoothAdapter.cancelDiscovery()
 
 
         val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
-        try {
-            mConnectThread = ConnectThread(myUUID, device).apply {
-                start()
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "connect fail : $e")
 
+        if(device.bondState==BluetoothDevice.BOND_BONDED){
+            try {
+                mConnectThread = ConnectThread(myUUID, device).apply {
+                    start()
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "connect fail : $e")
+
+            }
+        }else{
+            device.createBond()
         }
+
 
     }
 
@@ -202,16 +210,18 @@ class BluetoothChatService(
             device.createInsecureRfcommSocketToServiceRecord(myUUID)
         }
 
-
         override fun run() {
             Log.d(
                 TAG,
                 "Begin ConnectThread ${device.bondState == BluetoothDevice.BOND_BONDED} | $myUUID"
             )
-
-            Log.d(TAG, "Try connect : ")
-
-            connectSocket?.connect()
+            if(device.bondState==BluetoothDevice.BOND_BONDED){
+                connectSocket?.connect()
+            }else{
+                val res=device.createBond()
+                Log.d(TAG,res.toString())
+                if(res) connectSocket?.connect()
+            }
             Log.d(TAG, "Connect success")
         }
 
