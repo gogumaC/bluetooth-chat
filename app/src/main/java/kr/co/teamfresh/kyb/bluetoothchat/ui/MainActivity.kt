@@ -135,6 +135,9 @@ class MainActivity : ComponentActivity() {
                             val res = bluetoothAdapter.startDiscovery()
                             Log.d("checkfor","start res: $res")
                         }
+                    },
+                    onDeviceConnected = {
+                        Toast.makeText(this,"connected",Toast.LENGTH_SHORT).show()
                     }
 
                 )

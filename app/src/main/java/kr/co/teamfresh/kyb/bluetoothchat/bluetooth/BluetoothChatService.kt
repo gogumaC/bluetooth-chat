@@ -9,11 +9,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.Observable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import java.io.IOException
 import java.io.InputStream
@@ -31,7 +33,7 @@ class BluetoothChatService(
     private val handler: Handler,
     val context: Context,
     val bluetoothAdapter: BluetoothAdapter
-) {
+){
 
     companion object{
         const val STATE_NONE=0
@@ -41,8 +43,7 @@ class BluetoothChatService(
         const val STATE_CONNECTED=4
         const val STATE_DISCONNECTED=5
     }
-    var state:Int=0
-        private set
+    val state = MutableStateFlow(STATE_NONE)
     private var mConnectedThread: ConnectedThread? = null
     private var mConnectThread: ConnectThread? = null
     private var mAcceptThread: AcceptThread? = null
@@ -78,7 +79,6 @@ class BluetoothChatService(
     fun connect(deviceAddress: String) {
         Log.d(TAG, "connect to: " + deviceAddress)
 
-
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
             mConnectThread = null
@@ -88,7 +88,6 @@ class BluetoothChatService(
             mConnectedThread = null
         }
         if (bluetoothAdapter.isDiscovering) bluetoothAdapter.cancelDiscovery()
-
 
         val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
 
@@ -104,8 +103,6 @@ class BluetoothChatService(
         }else{
             device.createBond()
         }
-
-
     }
 
     fun connected(socket: BluetoothSocket, device: BluetoothDevice) {
@@ -215,14 +212,15 @@ class BluetoothChatService(
                 TAG,
                 "Begin ConnectThread ${device.bondState == BluetoothDevice.BOND_BONDED} | $myUUID"
             )
-            if(device.bondState==BluetoothDevice.BOND_BONDED){
+//            if(device.bondState==BluetoothDevice.BOND_BONDED){
                 connectSocket?.connect()
-            }else{
-                val res=device.createBond()
-                Log.d(TAG,res.toString())
-                if(res) connectSocket?.connect()
-            }
+//            }else{
+//                val res=device.createBond()
+//                Log.d(TAG,res.toString())
+//                if(res) connectSocket?.connect()
+//            }
             Log.d(TAG, "Connect success")
+            this@BluetoothChatService.state.value= STATE_CONNECTED
         }
 
         fun cancel() {

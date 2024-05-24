@@ -50,6 +50,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.DisposableEffectScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -69,6 +70,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
+import kotlinx.coroutines.flow.onSubscription
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.findActivity
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
@@ -79,6 +81,7 @@ fun ConnectScreen(
     modifier: Modifier = Modifier,
     service: BluetoothChatService? = null,
     onBluetoothDeviceScanRequest: () -> Unit,
+    onDeviceConnected:()->Unit
 ) {
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -125,6 +128,13 @@ fun ConnectScreen(
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
     }
     val context = LocalContext.current
+    LaunchedEffect(key1 = Unit) {
+        service?.state?.collect{
+            if(it==BluetoothChatService.STATE_CONNECTED){
+                onDeviceConnected()
+            }
+        }
+    }
     DisposableEffect(currentState) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -346,7 +356,7 @@ fun ConnectableDeviceListDialogPreview() {
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen(onBluetoothDeviceScanRequest = {})
+        ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {})
     }
 }
 
