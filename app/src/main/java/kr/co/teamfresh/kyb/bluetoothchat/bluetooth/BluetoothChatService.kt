@@ -150,7 +150,6 @@ class BluetoothChatService(
             var shouldLoop = true
             while (shouldLoop) {
                 val socket: BluetoothSocket? = try {
-                    val a=mmServerSocket
                     mmServerSocket?.accept()
                 } catch (e: IOException) {
                     Log.e(TAG, "Socket's accept() method failed", e)
