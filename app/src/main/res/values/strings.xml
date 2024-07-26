@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">BluetoothChat</string>
+    <string name="connecting"> 와 연결중</string>
 </resources>

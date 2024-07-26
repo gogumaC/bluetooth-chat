@@ -126,16 +126,16 @@ class MainActivity : ComponentActivity() {
         service.getPairedDeviceList()
         setContent {
             BluetoothChatTheme {
-                // A surface container using the 'background' color from the theme
-                ConnectScreen(
-                    onBluetoothScan = {
-                                      bluetoothScanLauncher.launch(discoverableIntent)
-                    },
-                    onClickPlusButton = {
-                    bluetoothSettingLauncher.launch(
-                        bluetoothSettingIntent
-                    )
-                }, Modifier.fillMaxSize(), service)
+                ChatScreen(modifier=Modifier.fillMaxSize())
+//                ConnectScreen(
+//                    onBluetoothScan = {
+//                                      bluetoothScanLauncher.launch(discoverableIntent)
+//                    },
+//                    onClickPlusButton = {
+//                    bluetoothSettingLauncher.launch(
+//                        bluetoothSettingIntent
+//                    )
+//                }, Modifier.fillMaxSize(), service)
             }
         }
     }
