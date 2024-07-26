@@ -48,6 +48,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.contentColorFor
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -65,10 +66,12 @@ import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.TalkBackground
+import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier) {
-    var text by remember { mutableStateOf(TextFieldValue("")) }
+fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= ChatScreenViewModel()) {
+    val text = viewModel.text.collectAsState()
+
     Surface(
         modifier = modifier
             .fillMaxSize()
@@ -101,10 +104,10 @@ fun ChatScreen(modifier: Modifier = Modifier) {
             }
 
             ChatInput(
-                text = text,
-                onValueChanged = { text = it },
+                text = text.value,
+                onValueChanged = { viewModel.setText(it) },
                 onSendButtonClicked = {
-                    text = TextFieldValue("")
+                    viewModel.sendMessage()
                 }
             )
         }
@@ -214,8 +217,8 @@ fun TalkUnit(text: String, modifier: Modifier = Modifier, defaultSize: Dp = 48.d
 
 @Composable
 fun ChatInput(
-    text: TextFieldValue,
-    onValueChanged: (TextFieldValue) -> Unit,
+    text: String,
+    onValueChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
     minHeight: Dp = 48.dp,
     maxHeight: Dp = 150.dp,
