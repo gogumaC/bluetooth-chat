@@ -1,16 +1,21 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kr.co.teamfresh.kyb.bluetoothchat.data.Device
 import kr.co.teamfresh.kyb.bluetoothchat.data.Message
 
 class ChatScreenViewModel:ViewModel() {
 
-    private val testList=List(4){Message(text="Hello +$it",isMine = false)}
-    private val _messageList = MutableStateFlow<List<Message>>(testList)
+    private val testDevice= Device(name = "testDevice",mac="00:00:00:00:00:00",color= Color.Cyan,image = null)
+    private val testList=List(4){Message(text="Hello +$it",isMine = false, device = testDevice)}
+
+
+    private val _messageList = MutableStateFlow(testList)
     val messageList : StateFlow<List<Message>> = _messageList.asStateFlow()
 
     private val _connectedDevice = MutableStateFlow<String>("")

@@ -98,9 +98,9 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
                     Talk(
                         content = it.text,
                         isMine = it.isMine,
-                        deviceName = "device",
-                        deviceColor = Color.Cyan,
-                        deviceImage = ImageVector.vectorResource(id = R.drawable.ic_launcher_foreground),
+                        deviceName = it.device?.name.toString(),
+                        deviceColor = it.device?.color ?: Color.Green,
+                        deviceImage = it.device?.image ?: ImageVector.vectorResource(id = R.drawable.ic_launcher_foreground),
                         defaultSize = 48.dp
                     )
                 }
@@ -173,6 +173,7 @@ fun Talk(
                     text = deviceName,
                     modifier = Modifier.padding(top = 4.dp),
                     style = TextStyle(fontSize = 12.sp, textAlign = TextAlign.Center),
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
