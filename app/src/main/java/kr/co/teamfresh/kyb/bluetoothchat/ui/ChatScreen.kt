@@ -70,7 +70,8 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 @Composable
 fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= ChatScreenViewModel()) {
-    val text = viewModel.text.collectAsState()
+    val text by viewModel.text.collectAsState()
+    val messageList by viewModel.messageList.collectAsState()
 
     Surface(
         modifier = modifier
@@ -92,10 +93,10 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(List(20) { it }) {
+                items(messageList) {
                     Talk(
-                        content = "$it Hello".repeat(it + 1),
-                        deviceName = "device $it",
+                        content = it.text,
+                        deviceName = "device",
                         deviceColor = Color.Cyan,
                         deviceImage = ImageVector.vectorResource(id = R.drawable.ic_launcher_foreground),
                         defaultSize = 48.dp
@@ -104,7 +105,7 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
             }
 
             ChatInput(
-                text = text.value,
+                text = text,
                 onValueChanged = { viewModel.setText(it) },
                 onSendButtonClicked = {
                     viewModel.sendMessage()
