@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.TalkBackground
 import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 @Composable
 fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= ChatScreenViewModel()) {
@@ -96,6 +97,7 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
                 items(messageList) {
                     Talk(
                         content = it.text,
+                        isMine = it.isMine,
                         deviceName = "device",
                         deviceColor = Color.Cyan,
                         deviceImage = ImageVector.vectorResource(id = R.drawable.ic_launcher_foreground),
@@ -153,24 +155,30 @@ fun Talk(
     content: String,
     deviceName: String,
     deviceColor: Color,
+    isMine: Boolean,
     modifier: Modifier = Modifier,
     defaultSize: Dp = 48.dp,
-    deviceImage: ImageVector?=null
+    deviceImage: ImageVector?=null,
 ) {
-    Row(modifier = modifier) {
-        Column(modifier = Modifier.width(defaultSize)) {
-            DeviceBadge(deviceName = deviceName, deviceColor = deviceColor, deviceImage = deviceImage, size = defaultSize)
-            Text(
-                text = deviceName,
-                modifier = Modifier.padding(top = 4.dp),
-                style = TextStyle(fontSize = 12.sp, textAlign = TextAlign.Center),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start) {
+        if (isMine) {
+            TalkUnit(content, defaultSize = defaultSize)
+            Spacer(modifier = Modifier.width(6.dp))
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
-        TalkUnit(content, defaultSize = defaultSize)
+        if (!isMine){
+            Column(modifier = Modifier.width(defaultSize), horizontalAlignment =Alignment.CenterHorizontally) {
+                DeviceBadge(deviceName = deviceName, deviceColor = deviceColor, deviceImage = deviceImage, size = defaultSize)
+                Text(
+                    text = deviceName,
+                    modifier = Modifier.padding(top = 4.dp),
+                    style = TextStyle(fontSize = 12.sp, textAlign = TextAlign.Center),
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            TalkUnit(content, defaultSize = defaultSize)
+        }
     }
 }
 

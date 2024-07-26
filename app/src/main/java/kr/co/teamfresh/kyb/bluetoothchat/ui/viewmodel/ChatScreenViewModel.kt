@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kr.co.teamfresh.kyb.bluetoothchat.data.Message
 
 class ChatScreenViewModel:ViewModel() {
-    private val _messageList = MutableStateFlow<List<Message>>(emptyList())
+
+    private val testList=List(4){Message(text="Hello +$it",isMine = false)}
+    private val _messageList = MutableStateFlow<List<Message>>(testList)
     val messageList : StateFlow<List<Message>> = _messageList.asStateFlow()
 
     private val _connectedDevice = MutableStateFlow<String>("")
@@ -18,7 +20,7 @@ class ChatScreenViewModel:ViewModel() {
     val text=_text.asStateFlow()
 
     fun sendMessage() {
-        val newMessage=Message(_text.value)
+        val newMessage=Message(text=_text.value,isMine = true)
         _messageList.value += newMessage
         _text.value=""
     }
