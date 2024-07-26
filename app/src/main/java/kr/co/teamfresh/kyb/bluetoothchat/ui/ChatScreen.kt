@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -29,13 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
@@ -47,31 +42,26 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
-import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.TalkBackground
 import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= ChatScreenViewModel()) {
+fun ChatScreen(
+    modifier: Modifier = Modifier,
+    viewModel: ChatScreenViewModel = ChatScreenViewModel()
+) {
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
     val connectedDevice by viewModel.connectedDevice.collectAsState()
@@ -102,7 +92,7 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
                         isMine = it.isMine,
                         deviceName = it.device?.name.toString(),
                         deviceColor = it.device?.color ?: Color.Green,
-                        deviceImage = it.device?.image ,
+                        deviceImage = it.device?.image,
                         defaultSize = 48.dp
                     )
                 }
@@ -141,22 +131,28 @@ fun DeviceInfo(
             .background(color = MaterialTheme.colorScheme.primary),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Card(modifier = Modifier
-            .padding(start = 16.dp)
-            .size(36.dp)
-            .background(color = backgroundColor, shape = CircleShape),
-            border = BorderStroke(width = 1.dp,color=Color.LightGray),
+        Card(
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .size(36.dp)
+                .background(color = backgroundColor, shape = CircleShape),
+            border = BorderStroke(width = 1.dp, color = Color.LightGray),
 
-        ) {
-            Box(modifier = Modifier.fillMaxSize().background(color=backgroundColor), contentAlignment = Alignment.Center){
+            ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
 
-                if(deviceImage!=null){
+                if (deviceImage != null) {
                     Image(
                         imageVector = deviceImage,
                         contentDescription = "",
                         modifier = Modifier
                     )
-                }else{
+                } else {
                     Text(
                         modifier = Modifier,
                         text = deviceName[0].toString().uppercase(),
@@ -167,11 +163,7 @@ fun DeviceInfo(
                     )
                 }
             }
-
         }
-
-
-
         Text(text = annotatedString, modifier = Modifier.padding(10.dp), color = Color.White)
     }
 }
@@ -184,17 +176,28 @@ fun Talk(
     isMine: Boolean,
     modifier: Modifier = Modifier,
     defaultSize: Dp = 48.dp,
-    deviceImage: ImageVector?=null,
+    deviceImage: ImageVector? = null,
 ) {
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
+    ) {
         if (isMine) {
             TalkUnit(content, defaultSize = defaultSize)
             Spacer(modifier = Modifier.width(6.dp))
         }
 
-        if (!isMine){
-            Column(modifier = Modifier.width(defaultSize), horizontalAlignment =Alignment.CenterHorizontally) {
-                DeviceBadge(deviceName = deviceName, deviceColor = deviceColor, deviceImage = deviceImage, size = defaultSize)
+        if (!isMine) {
+            Column(
+                modifier = Modifier.width(defaultSize),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                DeviceBadge(
+                    deviceName = deviceName,
+                    deviceColor = deviceColor,
+                    deviceImage = deviceImage,
+                    size = defaultSize
+                )
                 Text(
                     text = deviceName,
                     modifier = Modifier.padding(top = 4.dp),
@@ -215,7 +218,7 @@ fun DeviceBadge(
     deviceColor: Color,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
-    deviceImage: ImageVector?=null
+    deviceImage: ImageVector? = null
 ) {
     Card(modifier = modifier.size(size), border = BorderStroke(1.dp, color = Color.LightGray)) {
         Box(
@@ -224,7 +227,7 @@ fun DeviceBadge(
                 .background(color = deviceColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center
         ) {
-            if(deviceImage==null){
+            if (deviceImage == null) {
                 Text(
                     modifier = Modifier,
                     text = deviceName[0].toString().uppercase(),
@@ -233,7 +236,7 @@ fun DeviceBadge(
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )
-            }else{
+            } else {
                 Image(imageVector = deviceImage, contentDescription = "")
             }
         }
@@ -268,14 +271,12 @@ fun ChatInput(
     ) {
         HorizontalDivider(modifier = Modifier.height(1.dp))
 
-
         Row(
             modifier = Modifier
                 .padding(8.dp)
                 .height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically
-        )
-        {
+        ) {
             TextField(
                 modifier = Modifier
                     .weight(1f)
@@ -303,9 +304,7 @@ fun ChatInput(
             }
         }
     }
-
 }
-
 
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
