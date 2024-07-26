@@ -18,7 +18,7 @@ class ChatScreenViewModel:ViewModel() {
     private val _messageList = MutableStateFlow(testList)
     val messageList : StateFlow<List<Message>> = _messageList.asStateFlow()
 
-    private val _connectedDevice = MutableStateFlow<String>("")
+    private val _connectedDevice = MutableStateFlow<Device>(testDevice)
     val connectedDevice = _connectedDevice.asStateFlow()
 
     private val _text=MutableStateFlow("")

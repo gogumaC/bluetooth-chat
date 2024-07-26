@@ -60,6 +60,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.max
@@ -73,6 +74,7 @@ import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= ChatScreenViewModel()) {
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
+    val connectedDevice by viewModel.connectedDevice.collectAsState()
 
     Surface(
         modifier = modifier
@@ -80,9 +82,9 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
     ) {
         Column(verticalArrangement = Arrangement.SpaceBetween) {
             DeviceInfo(
-                deviceName = "Hellow",
-                deviceImage = ImageVector.vectorResource(id = R.drawable.ic_launcher_foreground),
-                backgroundColor = Color.Yellow
+                deviceName = connectedDevice.name,
+                deviceImage = connectedDevice.image,
+                backgroundColor = connectedDevice.color
             )
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -100,7 +102,7 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
                         isMine = it.isMine,
                         deviceName = it.device?.name.toString(),
                         deviceColor = it.device?.color ?: Color.Green,
-                        deviceImage = it.device?.image ?: ImageVector.vectorResource(id = R.drawable.ic_launcher_foreground),
+                        deviceImage = it.device?.image ,
                         defaultSize = 48.dp
                     )
                 }
@@ -120,7 +122,7 @@ fun ChatScreen(modifier: Modifier = Modifier,viewModel:ChatScreenViewModel= Chat
 @Composable
 fun DeviceInfo(
     deviceName: String,
-    deviceImage: ImageVector,
+    deviceImage: ImageVector?,
     backgroundColor: Color,
     modifier: Modifier = Modifier
 ) {
@@ -139,13 +141,37 @@ fun DeviceInfo(
             .background(color = MaterialTheme.colorScheme.primary),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            imageVector = deviceImage,
-            contentDescription = "",
-            modifier = Modifier
-                .padding(top = 10.dp, start = 16.dp, bottom = 10.dp)
-                .background(color = backgroundColor, shape = CircleShape)
-        )
+        Card(modifier = Modifier
+            .padding(start = 16.dp)
+            .size(36.dp)
+            .background(color = backgroundColor, shape = CircleShape),
+            border = BorderStroke(width = 1.dp,color=Color.LightGray),
+
+        ) {
+            Box(modifier = Modifier.fillMaxSize().background(color=backgroundColor), contentAlignment = Alignment.Center){
+
+                if(deviceImage!=null){
+                    Image(
+                        imageVector = deviceImage,
+                        contentDescription = "",
+                        modifier = Modifier
+                    )
+                }else{
+                    Text(
+                        modifier = Modifier,
+                        text = deviceName[0].toString().uppercase(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+        }
+
+
+
         Text(text = annotatedString, modifier = Modifier.padding(10.dp), color = Color.White)
     }
 }
@@ -201,7 +227,7 @@ fun DeviceBadge(
             if(deviceImage==null){
                 Text(
                     modifier = Modifier,
-                    text = deviceName[0].toString(),
+                    text = deviceName[0].toString().uppercase(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Black,
                     color = Color.White,
