@@ -49,11 +49,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.DisposableEffectScope
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,9 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
-import kotlinx.coroutines.flow.onSubscription
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.findActivity
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
@@ -81,7 +77,7 @@ fun ConnectScreen(
     modifier: Modifier = Modifier,
     service: BluetoothChatService? = null,
     onBluetoothDeviceScanRequest: () -> Unit,
-    onDeviceConnected:()->Unit
+    onDeviceConnected: () -> Unit
 ) {
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -89,8 +85,7 @@ fun ConnectScreen(
     var discoveredDevices by remember { mutableStateOf(setOf<BluetoothDevice>()) }
 
     var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
-
-
+    
     val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -129,8 +124,8 @@ fun ConnectScreen(
     }
     val context = LocalContext.current
     LaunchedEffect(key1 = Unit) {
-        service?.state?.collect{
-            if(it==BluetoothChatService.STATE_CONNECTED){
+        service?.state?.collect {
+            if (it == BluetoothChatService.STATE_CONNECTED) {
                 onDeviceConnected()
             }
         }
@@ -141,14 +136,11 @@ fun ConnectScreen(
                 Lifecycle.Event.ON_CREATE -> {
                     context.findActivity().registerReceiver(receiver, filter)
                 }
-
                 Lifecycle.Event.ON_DESTROY -> {
                     context.findActivity().unregisterReceiver(receiver)
                 }
-
                 else -> {}
             }
-
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
@@ -224,12 +216,10 @@ fun SwipeDeviceItem(
                     requestDeleteDevice()
                     false
                 }
-
                 SwipeToDismissBoxValue.EndToStart -> {
                     requestConnectDevice()
                     false
                 }
-
                 else -> true
             }
         })
@@ -261,12 +251,10 @@ fun SwipeDeviceItem(
                     modifier = Modifier.scale(scale)
                 )
             }
-
         }
     }) {
         BluetoothDeviceItem(name = name, macAddress = macAddress)
     }
-
 }
 
 @Composable
@@ -288,7 +276,6 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress
             Text(text = macAddress)
         }
     }
-
 }
 
 @SuppressLint("MissingPermission")
@@ -332,7 +319,6 @@ fun ConnectableDeviceListDialog(
                     }, itemModifier) {
                         BluetoothDeviceItem(name = it.name, macAddress = it.address)
                     }
-
                 }
             }
         }
@@ -359,4 +345,3 @@ fun ConnectScreenPreview() {
         ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {})
     }
 }
-
