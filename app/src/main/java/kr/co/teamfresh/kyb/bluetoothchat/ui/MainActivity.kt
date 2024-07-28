@@ -1,16 +1,18 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.Manifest
-import android.app.Activity
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,19 +32,22 @@ class MainActivity : ComponentActivity() {
     private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var bluetoothEnableLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothSettingLauncher: ActivityResultLauncher<Intent>
-
     private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
 
-    private val bluetoothPermissions = listOf(
+    private val bluetoothPermissions = mutableListOf(
         Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_CONNECT,
         Manifest.permission.BLUETOOTH_ADMIN,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.BLUETOOTH_SCAN
-    )
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    ).apply{
+        if(Build.VERSION.SDK_INT==31){
+            add(Manifest.permission.BLUETOOTH_CONNECT)
+            add(Manifest.permission.BLUETOOTH_SCAN)
+        }
+    }
 
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -65,18 +70,16 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
         val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
 
         bluetoothEnableLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
+                if (result.resultCode == RESULT_OK) {
                     Toast.makeText(this, "Bluetooth enabled", Toast.LENGTH_SHORT).show()
-                } else if (result.resultCode == Activity.RESULT_CANCELED) {
+                } else if (result.resultCode == RESULT_CANCELED) {
                     Toast.makeText(this, "bluetooth not enable", Toast.LENGTH_SHORT).show()
                 }
-
             }
 
         bluetoothPermissionLauncher =
@@ -93,13 +96,14 @@ class MainActivity : ComponentActivity() {
 
                 }
             }
-        bluetoothSettingLauncher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-
-            }
-        bluetoothScanLauncher=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
-
-        }
+//        bluetoothSettingLauncher =
+//            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+//
+//            }
+//        bluetoothScanLauncher =
+//            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+//
+//            }
 
         //블루투스가 기기에서 지원되는지 확인
         if (bluetoothAdapter == null) {
@@ -118,24 +122,25 @@ class MainActivity : ComponentActivity() {
             bluetoothEnableLauncher.launch(enableBtIntent)
         }
 
-
-        val bluetoothSettingIntent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
-        val discoverableIntent=Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply{
-            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,300)
-        }
         service.getPairedDeviceList()
         setContent {
             BluetoothChatTheme {
-                ChatScreen(modifier=Modifier.fillMaxSize())
-//                ConnectScreen(
-//                    onBluetoothScan = {
-//                                      bluetoothScanLauncher.launch(discoverableIntent)
-//                    },
-//                    onClickPlusButton = {
-//                    bluetoothSettingLauncher.launch(
-//                        bluetoothSettingIntent
-//                    )
-//                }, Modifier.fillMaxSize(), service)
+                // A surface container using the 'background' color from the theme
+                ConnectScreen(
+                    modifier=Modifier.fillMaxSize(),
+                    service = service,
+                    onBluetoothDeviceScanRequest = {
+                        Log.d("checkfor","discovering state : ${bluetoothAdapter.isDiscovering} findStart!")
+                        if(!bluetoothAdapter.isDiscovering) {
+                            val res = bluetoothAdapter.startDiscovery()
+                            Log.d("checkfor","start res: $res")
+                        }
+                    },
+                    onDeviceConnected = {
+                        Toast.makeText(this,"connected",Toast.LENGTH_SHORT).show()
+                    }
+
+                )
             }
         }
     }
@@ -164,6 +169,4 @@ class MainActivity : ComponentActivity() {
 //        }
 
     }
-
-
 }
