@@ -85,7 +85,7 @@ fun ConnectScreen(
     var discoveredDevices by remember { mutableStateOf(setOf<BluetoothDevice>()) }
 
     var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
-    
+
     val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         override fun onReceive(p0: Context?, p1: Intent?) {
