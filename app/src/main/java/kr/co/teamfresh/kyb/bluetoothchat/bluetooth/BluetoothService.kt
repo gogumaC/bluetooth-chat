@@ -5,18 +5,12 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.database.Observable
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.StateFlow
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -35,28 +29,21 @@ class BluetoothChatService(
     val bluetoothAdapter: BluetoothAdapter
 ){
 
-    companion object{
-        const val STATE_NONE=0
-        const val STATE_DISCOVERING=1
-        const val STATE_DISCOVERING_FINISHED=2
-        const val STATE_CONNECTING=3
-        const val STATE_CONNECTED=4
-        const val STATE_DISCONNECTED=5
-    }
-    val state = MutableStateFlow(STATE_NONE)
+    private val _state = MutableStateFlow(BluetoothState.STATE_NONE)
+    val state: StateFlow<BluetoothState> = _state
     private var mConnectedThread: ConnectedThread? = null
     private var mConnectThread: ConnectThread? = null
     private var mAcceptThread: AcceptThread? = null
 
     private val myUUID =
-        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//"8CE255C0-200A-11E0-AC64-0800200C9A66")
+        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     private val NAME = "BluetoothChat"
 
     init {
         start()
     }
 
-    fun start() {
+    private fun start() {
 
         Log.d(TAG, "start :")
 
@@ -162,8 +149,6 @@ class BluetoothChatService(
         private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
             bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, myUUID)
         }
-
-
         override fun run() {
 
             name = "AcceptThread"
@@ -220,7 +205,7 @@ class BluetoothChatService(
 //                if(res) connectSocket?.connect()
 //            }
             Log.d(TAG, "Connect success")
-            this@BluetoothChatService.state.value= STATE_CONNECTED
+            _state.value= BluetoothState.STATE_CONNECTED
         }
 
         fun cancel() {

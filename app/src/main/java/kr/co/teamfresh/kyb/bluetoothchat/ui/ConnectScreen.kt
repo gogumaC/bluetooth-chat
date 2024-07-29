@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -50,6 +51,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +70,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.currentStateAsState
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothState
 import kr.co.teamfresh.kyb.bluetoothchat.findActivity
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
@@ -83,8 +86,6 @@ fun ConnectScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentState = lifecycleOwner.lifecycle.currentStateAsState()
     var discoveredDevices by remember { mutableStateOf(setOf<BluetoothDevice>()) }
-
-    var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
 
     val receiver = object : BroadcastReceiver() {
         @SuppressLint("MissingPermission")
@@ -107,12 +108,12 @@ fun ConnectScreen(
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     Log.d("checkfor", "start discovering")
-                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING
+//                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     Log.d("checkfor", "finish discovering")
-                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING_FINISHED
+//                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING_FINISHED
                 }
             }
         }
@@ -123,33 +124,36 @@ fun ConnectScreen(
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
     }
     val context = LocalContext.current
-    LaunchedEffect(key1 = Unit) {
-        service?.state?.collect {
-            if (it == BluetoothChatService.STATE_CONNECTED) {
-                onDeviceConnected()
-            }
-        }
-    }
-    DisposableEffect(currentState) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> {
-                    context.findActivity().registerReceiver(receiver, filter)
-                }
-                Lifecycle.Event.ON_DESTROY -> {
-                    context.findActivity().unregisterReceiver(receiver)
-                }
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+//    LaunchedEffect(key1 = Unit) {
+//        service?.state?.collect {
+//           Log.d("checkfor","state : $it")
+//            if (it == BluetoothState.STATE_CONNECTED) {
+//                onDeviceConnected()
+//            }
+//        }
+//    }
+
+    val bluetoothState=service?.state?.collectAsState()
+//    DisposableEffect(currentState) {
+//        val observer = LifecycleEventObserver { _, event ->
+//            when (event) {
+//                Lifecycle.Event.ON_CREATE -> {
+//                    context.findActivity().registerReceiver(receiver, filter)
+//                }
+//                Lifecycle.Event.ON_DESTROY -> {
+//                    context.findActivity().unregisterReceiver(receiver)
+//                }
+//                else -> {}
+//            }
+//        }
+//        lifecycleOwner.lifecycle.addObserver(observer)
+//        onDispose {
+//            lifecycleOwner.lifecycle.removeObserver(observer)
+//        }
+//    }
 
     var showDialog by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier=modifier) {
         ConnectLayout(
             service = service,
             onBluetoothScanRequest = {
@@ -158,7 +162,7 @@ fun ConnectScreen(
             })
         if (showDialog) ConnectableDeviceListDialog(
             deviceList = discoveredDevices.toList(),
-            bluetoothDiscoveringState = bluetoothDiscoveringState,
+            bluetoothDiscoveringState = bluetoothState?.value?:BluetoothState.STATE_NONE,
             onDismiss = { showDialog = false },
             onSelectDevice = {
                 service?.connect(it.address)
@@ -282,13 +286,13 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress
 @Composable
 fun ConnectableDeviceListDialog(
     deviceList: List<BluetoothDevice>,
-    bluetoothDiscoveringState: Int,
+    bluetoothDiscoveringState: BluetoothState,
     onSelectDevice: (BluetoothDevice) -> Unit,
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     var selectedDevice by remember { mutableStateOf<BluetoothDevice?>(null) }
-    val isFinding = (bluetoothDiscoveringState == BluetoothChatService.STATE_DISCOVERING)
+    val isFinding = (bluetoothDiscoveringState == BluetoothState.STATE_DISCOVERING)
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier = modifier.aspectRatio(0.7f)) {
             Row(
@@ -332,7 +336,7 @@ fun ConnectableDeviceListDialogPreview() {
         Surface {
             ConnectableDeviceListDialog(
                 listOf(),
-                BluetoothChatService.STATE_DISCOVERING,
+                BluetoothState.STATE_DISCOVERING,
                 onSelectDevice = {}) {}
         }
     }
