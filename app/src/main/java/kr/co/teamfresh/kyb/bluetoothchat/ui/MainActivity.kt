@@ -21,11 +21,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
+import kotlin.math.exp
 
 class MainActivity : ComponentActivity() {
 
@@ -33,19 +35,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var bluetoothEnableLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothSettingLauncher: ActivityResultLauncher<Intent>
     private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
-
-    private val bluetoothPermissions = mutableListOf(
-        Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_ADMIN,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    ).apply{
-        if(Build.VERSION.SDK_INT==31){
-            add(Manifest.permission.BLUETOOTH_CONNECT)
-            add(Manifest.permission.BLUETOOTH_SCAN)
-        }
-    }
-
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,10 +79,9 @@ class MainActivity : ComponentActivity() {
                     val map = deniedList.groupBy { permission ->
                         if (shouldShowRequestPermissionRationale(permission)) "DENIED" else "EXPLAINED"
                     }
-                    map["DENIED"]?.let {}
-                    map["EXPLAINED"]?.let {}
-                } else {
-
+                    map["DENIED"]?.let {
+                        explainBluetoothConnectPermission()
+                    }
                 }
             }
 //        bluetoothSettingLauncher =
@@ -127,17 +115,20 @@ class MainActivity : ComponentActivity() {
             BluetoothChatTheme {
                 // A surface container using the 'background' color from the theme
                 ConnectScreen(
-                    modifier=Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     service = service,
                     onBluetoothDeviceScanRequest = {
-                        Log.d("checkfor","discovering state : ${bluetoothAdapter.isDiscovering} findStart!")
-                        if(!bluetoothAdapter.isDiscovering) {
+                        Log.d(
+                            "checkfor",
+                            "discovering state : ${bluetoothAdapter.isDiscovering} findStart!"
+                        )
+                        if (!bluetoothAdapter.isDiscovering) {
                             val res = bluetoothAdapter.startDiscovery()
-                            Log.d("checkfor","start res: $res")
+                            Log.d("checkfor", "start res: $res")
                         }
                     },
                     onDeviceConnected = {
-                        Toast.makeText(this,"connected",Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "connected", Toast.LENGTH_SHORT).show()
                     }
 
                 )
@@ -145,28 +136,39 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val bluetoothPermissions = mutableListOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    ).apply {
+        if (Build.VERSION.SDK_INT >= 31) {
+            add(Manifest.permission.BLUETOOTH_CONNECT)
+            add(Manifest.permission.BLUETOOTH_SCAN)
+        }
+    }
+
     private fun requestBluetoothConnectPermission() {
-        val permissionList = mutableListOf<String>()
+        val notGrantedPermissionList = mutableListOf<String>()
 
         for (permission in bluetoothPermissions) {
+
             val result = ContextCompat.checkSelfPermission(this, permission)
-            if (result != PackageManager.PERMISSION_GRANTED) {
-                permissionList.add(permission)
-            }
-        }
+            if (result == PackageManager.PERMISSION_GRANTED) continue
+            notGrantedPermissionList.add(permission)
+            if (shouldShowRequestPermissionRationale(permission)) explainBluetoothConnectPermission()
 
-        if (permissionList.isNotEmpty()) {
-            bluetoothPermissionLauncher.launch(permissionList.toTypedArray())
         }
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//            if (ContextCompat.checkSelfPermission(
-//                    this,
-//                    Manifest.permission.BLUETOOTH_CONNECT
-//                ) == PackageManager.PERMISSION_DENIED
-//            ) {
-//                bluetoothPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
-//            }
-//        }
+        if (notGrantedPermissionList.isNotEmpty()) {
+            bluetoothPermissionLauncher.launch(notGrantedPermissionList.toTypedArray())
+        }
+    }
 
+    private fun explainBluetoothConnectPermission() {
+        Toast.makeText(
+            this,
+            ContextCompat.getString(this, R.string.permission_required),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
