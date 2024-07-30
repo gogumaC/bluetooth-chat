@@ -11,8 +11,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,12 +20,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import kr.co.teamfresh.kyb.bluetoothchat.R
-import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
-import kotlin.math.exp
 
 class MainActivity : ComponentActivity() {
 
@@ -101,14 +98,7 @@ class MainActivity : ComponentActivity() {
         //블루투스 권한 확인
         requestBluetoothConnectPermission()
 
-        val service = BluetoothChatService(mHandler, this, bluetoothAdapter!!)
-
-        //블루투스가 활성화 되어있는지 확인
-        if (!bluetoothAdapter.isEnabled) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            //startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT) -- deprecated
-            bluetoothEnableLauncher.launch(enableBtIntent)
-        }
+        val service = BluetoothService(mHandler, this, bluetoothAdapter!!)
 
         service.getPairedDeviceList()
         setContent {
@@ -118,14 +108,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     service = service,
                     onBluetoothDeviceScanRequest = {
-                        Log.d(
-                            "checkfor",
-                            "discovering state : ${bluetoothAdapter.isDiscovering} findStart!"
-                        )
-                        if (!bluetoothAdapter.isDiscovering) {
-                            val res = bluetoothAdapter.startDiscovery()
-                            Log.d("checkfor", "start res: $res")
-                        }
+                       service.startDiscovering()
                     },
                     onDeviceConnected = {
                         Toast.makeText(this, "connected", Toast.LENGTH_SHORT).show()
