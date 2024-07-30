@@ -2,8 +2,6 @@ package kr.co.teamfresh.kyb.bluetoothchat.bluetooth
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Activity.RESULT_CANCELED
-import android.app.Activity.RESULT_OK
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
@@ -16,24 +14,15 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.OnLifecycleEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.io.InputStream
@@ -41,7 +30,7 @@ import java.io.OutputStream
 import java.util.UUID
 
 
-private const val TAG = "MY_APP_DEBUG_TAG"
+private const val TAG = "BLUETOOTH_DEBUG_TAG"
 
 const val MESSAGE_READ = 0
 const val MESSAGE_WRITE = 1
@@ -52,7 +41,7 @@ class BluetoothService(
     private val handler: Handler,
     val context: Context,
     val bluetoothAdapter: BluetoothAdapter,
-    val activity: ComponentActivity?=null
+    private val activity: ComponentActivity?=null
 ):DefaultLifecycleObserver{
 
     private val _state = MutableStateFlow(BluetoothState.STATE_NONE)
@@ -65,13 +54,14 @@ class BluetoothService(
         UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     private val NAME = "BluetoothChat"
 
-    val discoveredDevices= mutableStateListOf<BluetoothDevice>()
-    val filter = IntentFilter().apply {
+    private val _discoveredDevices= MutableStateFlow(mutableSetOf<BluetoothDevice>())
+    val discoveredDevices:StateFlow<MutableSet<BluetoothDevice>> = _discoveredDevices
+    private val filter = IntentFilter().apply {
         addAction(BluetoothDevice.ACTION_FOUND)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
     }
-    val receiver = object : BroadcastReceiver() {
+    private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
             val action = p1?.action
             when (action) {
@@ -80,22 +70,23 @@ class BluetoothService(
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
                     ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    Log.d("checkfor", "foundedDevice : ${device?.name} ${device?.address}")
+                    Log.d(TAG, "foundedDevice : ${device?.name} ${device?.address}")
                     device?.let {
-                        discoveredDevices.add(device)
+                        _discoveredDevices.value=mutableSetOf<BluetoothDevice>().apply{
+                            addAll(_discoveredDevices.value)
+                            add(device)
+                        }
                     }
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     _state.value=BluetoothState.STATE_DISCOVERING
-                    Log.d("checkfor", "start discovering")
-//                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING
+
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     _state.value=BluetoothState.STATE_DISCOVERING_FINISHED
-                    Log.d("checkfor", "finish discovering")
-//                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING_FINISHED
+
                 }
             }
         }
@@ -142,6 +133,16 @@ class BluetoothService(
         }
     }
 
+    fun finishDiscovering(){
+        if(bluetoothAdapter.isDiscovering) {
+            val res=bluetoothAdapter.cancelDiscovery()
+            if(res){
+                _state.value=BluetoothState.STATE_DISCOVERING_FINISHED
+            }
+
+        }
+    }
+
     private fun start() {
 
         Log.d(TAG, "start :")
@@ -157,11 +158,8 @@ class BluetoothService(
         if (mAcceptThread == null) {
             mAcceptThread = AcceptThread().apply { start() }
         }
-
     }
 
-
-    @SuppressLint("MissingPermission")
     fun connect(deviceAddress: String) {
         Log.d(TAG, "connect to: " + deviceAddress)
 

@@ -64,6 +64,7 @@ fun ConnectScreen(
     onDeviceConnected: () -> Unit
 ) {
 
+    val discoveredDevice = service?.discoveredDevices?.collectAsState()
     val bluetoothState=service?.state?.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     Box(modifier=modifier) {
@@ -74,9 +75,11 @@ fun ConnectScreen(
                 onBluetoothDeviceScanRequest()
             })
         if (showDialog) ConnectableDeviceListDialog(
-            deviceList = listOf(),
+            deviceList = discoveredDevice?.value?.toList()?:listOf(),
             bluetoothDiscoveringState = bluetoothState?.value?:BluetoothState.STATE_NONE,
-            onDismiss = { showDialog = false },
+            onDismiss = {
+                showDialog = false
+                service?.finishDiscovering() },
             onSelectDevice = {
                 service?.connect(it.address)
             }
