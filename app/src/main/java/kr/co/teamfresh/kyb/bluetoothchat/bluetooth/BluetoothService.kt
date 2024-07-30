@@ -17,11 +17,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -45,8 +51,9 @@ const val MESSAGE_TOAST = 2
 class BluetoothService(
     private val handler: Handler,
     val context: Context,
-    val bluetoothAdapter: BluetoothAdapter
-){
+    val bluetoothAdapter: BluetoothAdapter,
+    val activity: ComponentActivity?=null
+):DefaultLifecycleObserver{
 
     private val _state = MutableStateFlow(BluetoothState.STATE_NONE)
     val state: StateFlow<BluetoothState> = _state
@@ -95,6 +102,7 @@ class BluetoothService(
     }
 
     init {
+        activity?.lifecycle?.addObserver(this)
         //블루투스가 활성화 되어있는지 확인
         if (!bluetoothAdapter.isEnabled) {
             _state.value=BluetoothState.STATE_DISABLE
@@ -107,6 +115,16 @@ class BluetoothService(
             }
         }
         start()
+    }
+
+    override fun onCreate(owner: LifecycleOwner) {
+        activity?.registerReceiver(receiver, filter)
+        super.onCreate(owner)
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+        activity?.unregisterReceiver(receiver)
+        super.onDestroy(owner)
     }
 
     fun startDiscovering(activity: Activity) {
@@ -293,10 +311,7 @@ class BluetoothService(
             } catch (e: IOException) {
                 Log.e(TAG, "close() of connect" + connectSocket + " socket failed", e)
             }
-
         }
-
-
     }
 
     private inner class ConnectedThread(private val mmSocket: BluetoothSocket) : Thread() {
@@ -351,6 +366,7 @@ class BluetoothService(
             }
         }
     }
+
 
 
 }

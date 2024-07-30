@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     service = service,
                     onBluetoothDeviceScanRequest = {
-                       service.startDiscovering()
+                       service.startDiscovering(this)
                     },
                     onDeviceConnected = {
                         Toast.makeText(this, "connected", Toast.LENGTH_SHORT).show()
