@@ -53,13 +53,16 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothState
 import kr.co.teamfresh.kyb.bluetoothchat.findActivity
@@ -71,7 +74,8 @@ fun ConnectScreen(
     modifier: Modifier = Modifier,
     service: BluetoothService? = null,
     onBluetoothDeviceScanRequest: () -> Unit,
-    onDeviceConnected: () -> Unit
+    onDeviceConnected: () -> Unit,
+    onChatScreenNavigateRequested: () -> Unit
 ) {
 
     val discoveredDevice = service?.discoveredDevices?.collectAsState()
@@ -80,6 +84,7 @@ fun ConnectScreen(
     Box(modifier = modifier) {
         ConnectLayout(
             service = service,
+            onChatScreenButtonClicked = onChatScreenNavigateRequested,
             onBluetoothScanRequest = {
                 showDialog = true
                 onBluetoothDeviceScanRequest()
@@ -103,6 +108,7 @@ fun ConnectScreen(
 fun ConnectLayout(
     modifier: Modifier = Modifier,
     onBluetoothScanRequest: () -> Unit,
+    onChatScreenButtonClicked:()->Unit,
     service: BluetoothService? = null
 ) {
     Column(
@@ -110,23 +116,31 @@ fun ConnectLayout(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("저장된 기기 목록")
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            items(service?.getPairedDeviceList() ?: listOf()) {
-                val name = it.name
-                val address = it.address
-                SwipeDeviceItem(
-                    name = name,
-                    macAddress = address,
-                    requestConnectDevice = { service?.connect(address) },
-                    requestDeleteDevice = {})
-            }
-            item {
-                TextButton(onClick = { onBluetoothScanRequest() }) {
-                    Text(text = "+ 새 기기 연결하기", modifier = Modifier)
+        Column(modifier=modifier.weight(1f)) {
+            Text("저장된 기기 목록")
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                items(service?.getPairedDeviceList() ?: listOf()) {
+                    val name = it.name
+                    val address = it.address
+                    SwipeDeviceItem(
+                        name = name,
+                        macAddress = address,
+                        requestConnectDevice = { service?.connect(address) },
+                        requestDeleteDevice = {})
+                }
+                item {
+                    TextButton(onClick = { onBluetoothScanRequest() }) {
+                        Text(text = "+ 새 기기 연결하기", modifier = Modifier)
+                    }
                 }
             }
+        }
+        
+        Button(onClick = onChatScreenButtonClicked,modifier= Modifier
+            .fillMaxWidth()
+            .height(64.dp)) {
+            Text(text = stringResource(id = R.string.go_to_chat),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold,modifier=Modifier)
         }
     }
 }
@@ -301,7 +315,7 @@ fun ConnectableDeviceListDialogPreview() {
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {})
+        ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {}, onChatScreenNavigateRequested = {})
     }
 }
 

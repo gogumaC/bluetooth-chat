@@ -110,6 +110,7 @@ class MainActivity : ComponentActivity() {
                     onBluetoothDeviceScanRequest = {
                        service.startDiscovering(this)
                     },
+                    onChatScreenNavigateRequested = {},
                     onDeviceConnected = {
                         Toast.makeText(this, "connected", Toast.LENGTH_SHORT).show()
                     }

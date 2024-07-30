@@ -293,14 +293,19 @@ class BluetoothService(
                 "Begin ConnectThread ${device.bondState == BluetoothDevice.BOND_BONDED} | $myUUID"
             )
 //            if(device.bondState==BluetoothDevice.BOND_BONDED){
-                connectSocket?.connect()
+                try {
+                    connectSocket?.connect()
+                    Log.d(TAG, "Connect success")
+                    _state.value= BluetoothState.STATE_CONNECTED
+                }catch (e:IOException){
+                    Log.e(TAG, "connect fail : $e")
+                }
 //            }else{
 //                val res=device.createBond()
 //                Log.d(TAG,res.toString())
 //                if(res) connectSocket?.connect()
 //            }
-            Log.d(TAG, "Connect success")
-            _state.value= BluetoothState.STATE_CONNECTED
+
         }
 
         fun cancel() {
