@@ -1,20 +1,7 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.annotation.SuppressLint
-import android.app.Activity.RESULT_CANCELED
-import android.app.Activity.RESULT_OK
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
-import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,13 +9,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.foundation.lazy.items
@@ -38,6 +28,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -50,6 +41,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -61,13 +53,18 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.currentStateAsState
-import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothChatService
+import kr.co.teamfresh.kyb.bluetoothchat.R
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothState
 import kr.co.teamfresh.kyb.bluetoothchat.findActivity
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
@@ -75,91 +72,30 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 @Composable
 fun ConnectScreen(
     modifier: Modifier = Modifier,
-    service: BluetoothChatService? = null,
+    service: BluetoothService? = null,
     onBluetoothDeviceScanRequest: () -> Unit,
-    onDeviceConnected: () -> Unit
+    onDeviceConnected: () -> Unit,
+    onChatScreenNavigateRequested: () -> Unit
 ) {
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val currentState = lifecycleOwner.lifecycle.currentStateAsState()
-    var discoveredDevices by remember { mutableStateOf(setOf<BluetoothDevice>()) }
-
-    var bluetoothDiscoveringState by remember { mutableIntStateOf(BluetoothChatService.STATE_NONE) }
-
-    val receiver = object : BroadcastReceiver() {
-        @SuppressLint("MissingPermission")
-        override fun onReceive(p0: Context?, p1: Intent?) {
-            val action = p1?.action
-            when (action) {
-                BluetoothDevice.ACTION_FOUND -> {
-                    val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
-                        BluetoothDevice.EXTRA_DEVICE,
-                        BluetoothDevice::class.java
-                    ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    Log.d("checkfor", "foundedDevice : ${device?.name} ${device?.address}")
-                    device?.let {
-                        discoveredDevices = mutableSetOf<BluetoothDevice>().apply {
-                            addAll(discoveredDevices)
-                            add(device)
-                        }
-                    }
-                }
-
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.d("checkfor", "start discovering")
-                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING
-                }
-
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.d("checkfor", "finish discovering")
-                    bluetoothDiscoveringState = BluetoothChatService.STATE_DISCOVERING_FINISHED
-                }
-            }
-        }
-    }
-    val filter = IntentFilter().apply {
-        addAction(BluetoothDevice.ACTION_FOUND)
-        addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-        addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-    }
-    val context = LocalContext.current
-    LaunchedEffect(key1 = Unit) {
-        service?.state?.collect {
-            if (it == BluetoothChatService.STATE_CONNECTED) {
-                onDeviceConnected()
-            }
-        }
-    }
-    DisposableEffect(currentState) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> {
-                    context.findActivity().registerReceiver(receiver, filter)
-                }
-                Lifecycle.Event.ON_DESTROY -> {
-                    context.findActivity().unregisterReceiver(receiver)
-                }
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
+    val discoveredDevice = service?.discoveredDevices?.collectAsState()
+    val bluetoothState = service?.state?.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier = modifier) {
         ConnectLayout(
             service = service,
+            onChatScreenButtonClicked = onChatScreenNavigateRequested,
             onBluetoothScanRequest = {
                 showDialog = true
                 onBluetoothDeviceScanRequest()
             })
         if (showDialog) ConnectableDeviceListDialog(
-            deviceList = discoveredDevices.toList(),
-            bluetoothDiscoveringState = bluetoothDiscoveringState,
-            onDismiss = { showDialog = false },
+            deviceList = discoveredDevice?.value?.toList() ?: listOf(),
+            bluetoothDiscoveringState = bluetoothState?.value ?: BluetoothState.STATE_NONE,
+            onDismiss = {
+                showDialog = false
+                service?.finishDiscovering()
+            },
             onSelectDevice = {
                 service?.connect(it.address)
             }
@@ -172,30 +108,39 @@ fun ConnectScreen(
 fun ConnectLayout(
     modifier: Modifier = Modifier,
     onBluetoothScanRequest: () -> Unit,
-    service: BluetoothChatService? = null
+    onChatScreenButtonClicked:()->Unit,
+    service: BluetoothService? = null
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("저장된 기기 목록")
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            items(service?.getPairedDeviceList() ?: listOf()) {
-                val name = it.name
-                val address = it.address
-                SwipeDeviceItem(
-                    name = name,
-                    macAddress = address,
-                    requestConnectDevice = { service?.connect(address) },
-                    requestDeleteDevice = {})
-            }
-            item {
-                TextButton(onClick = { onBluetoothScanRequest() }) {
-                    Text(text = "+ 새 기기 연결하기", modifier = Modifier)
+        Column(modifier=modifier.weight(1f)) {
+            Text("저장된 기기 목록")
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                items(service?.getPairedDeviceList() ?: listOf()) {
+                    val name = it.name
+                    val address = it.address
+                    SwipeDeviceItem(
+                        name = name,
+                        macAddress = address,
+                        requestConnectDevice = { service?.connect(address) },
+                        requestDeleteDevice = {})
+                }
+                item {
+                    TextButton(onClick = { onBluetoothScanRequest() }) {
+                        Text(text = "+ 새 기기 연결하기", modifier = Modifier)
+                    }
                 }
             }
+        }
+        
+        Button(onClick = onChatScreenButtonClicked,modifier= Modifier
+            .fillMaxWidth()
+            .height(64.dp)) {
+            Text(text = stringResource(id = R.string.go_to_chat),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold,modifier=Modifier)
         }
     }
 }
@@ -216,10 +161,12 @@ fun SwipeDeviceItem(
                     requestDeleteDevice()
                     false
                 }
+
                 SwipeToDismissBoxValue.EndToStart -> {
                     requestConnectDevice()
                     false
                 }
+
                 else -> true
             }
         })
@@ -258,22 +205,40 @@ fun SwipeDeviceItem(
 }
 
 @Composable
-fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress: String) {
+fun BluetoothDeviceItem(
+    modifier: Modifier = Modifier,
+    name: String?,
+    macAddress: String,
+    borderColor: Color = Color.LightGray,
+    borderWidth: Dp = 0.4.dp
+) {
     Surface(
         modifier = modifier
-            .height(48.dp)
+            .height(64.dp)
             .fillMaxWidth()
-            .border(width = 0.4.dp, color = Color.LightGray, shape = RoundedCornerShape(8.dp)),
+            .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(8.dp)),
         shape = RoundedCornerShape(8.dp),
         color = Color.White
     ) {
         Row(
-            modifier = Modifier.padding(6.dp),
+            modifier = Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = name ?: "NO name")
-            Text(text = macAddress)
+            Text(
+                text = name ?: "no name",
+                modifier = Modifier.weight(0.6f),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "mac : $macAddress",
+                style = TextStyle(color = Color.Gray, fontSize = 12.sp),
+                modifier = Modifier
+                    .align(Alignment.Top)
+                    .weight(0.4f)
+            )
         }
     }
 }
@@ -282,17 +247,22 @@ fun BluetoothDeviceItem(modifier: Modifier = Modifier, name: String?, macAddress
 @Composable
 fun ConnectableDeviceListDialog(
     deviceList: List<BluetoothDevice>,
-    bluetoothDiscoveringState: Int,
+    bluetoothDiscoveringState: BluetoothState,
     onSelectDevice: (BluetoothDevice) -> Unit,
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     var selectedDevice by remember { mutableStateOf<BluetoothDevice?>(null) }
-    val isFinding = (bluetoothDiscoveringState == BluetoothChatService.STATE_DISCOVERING)
+    val isFinding = (bluetoothDiscoveringState == BluetoothState.STATE_DISCOVERING)
     Dialog(onDismissRequest = onDismiss) {
-        Card(modifier = modifier.aspectRatio(0.7f)) {
+        Card(
+            modifier = modifier.aspectRatio(0.7f),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -305,20 +275,23 @@ fun ConnectableDeviceListDialog(
                     )
                 }
             }
-            HorizontalDivider()
-            LazyColumn {
+            HorizontalDivider(color = Color.LightGray)
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(horizontal = 8.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
                 items(deviceList) {
-                    val itemModifier = if (selectedDevice == it) {
-                        Modifier.border(2.dp, Color.Blue)
-                    } else {
-                        Modifier
-                    }
-                    Surface(onClick = {
-                        selectedDevice = it
-                        onSelectDevice(it)
-                    }, itemModifier) {
-                        BluetoothDeviceItem(name = it.name, macAddress = it.address)
-                    }
+                    BluetoothDeviceItem(
+                        modifier = Modifier.clickable {
+                            selectedDevice = it
+                            onSelectDevice(it)
+                        },
+                        name = it.name,
+                        macAddress = it.address,
+                        borderColor = if (selectedDevice == it) Color.Blue else Color.LightGray,
+                        borderWidth = if (selectedDevice == it) 1.dp else 0.4.dp
+                    )
                 }
             }
         }
@@ -332,7 +305,7 @@ fun ConnectableDeviceListDialogPreview() {
         Surface {
             ConnectableDeviceListDialog(
                 listOf(),
-                BluetoothChatService.STATE_DISCOVERING,
+                BluetoothState.STATE_DISCOVERING,
                 onSelectDevice = {}) {}
         }
     }
@@ -342,6 +315,17 @@ fun ConnectableDeviceListDialogPreview() {
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {})
+        ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {}, onChatScreenNavigateRequested = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DeviceItemPreview() {
+    BluetoothChatTheme {
+        BluetoothDeviceItem(
+            name = "TEST1".repeat(10),
+            macAddress = "12:34:56:78:90"
+        )
     }
 }
