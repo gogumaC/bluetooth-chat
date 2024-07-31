@@ -3,4 +3,7 @@
     <string name="connecting"> 와 연결중</string>
     <string name="permission_required">해당 작업을 시작하기 위해서는 블루투스 권한이 필요합니다.</string>
     <string name="go_to_chat">채팅 화면으로 이동</string>
+    <string name="error_occurred">에러가 발생했습니다.</string>
+    <string name="ok">확인</string>
+    <string name="error_msg">상대 기기가 근처에 있는지 확인하고,\n잠시 후 다시 시도해주세요.</string>
 </resources>
