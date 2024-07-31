@@ -7,3 +7,9 @@ object Connect
 
 @Serializable
 object Chat
+
+@Serializable
+object Error
+
+@Serializable
+object Discovery
