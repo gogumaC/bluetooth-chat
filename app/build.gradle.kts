@@ -5,7 +5,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
-   // kotlin("jvm") version "2.0.0"
 }
 
 
@@ -72,4 +71,10 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.8")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    //navigation
+    implementation ("androidx.navigation:navigation-compose:2.8.0-beta06")
+
+    //serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
 }

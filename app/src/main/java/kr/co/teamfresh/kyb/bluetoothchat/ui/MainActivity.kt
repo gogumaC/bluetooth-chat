@@ -19,6 +19,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
@@ -101,21 +104,31 @@ class MainActivity : ComponentActivity() {
         val service = BluetoothService(mHandler, this, bluetoothAdapter!!)
 
         service.getPairedDeviceList()
-        setContent {
-            BluetoothChatTheme {
-                // A surface container using the 'background' color from the theme
-                ConnectScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    service = service,
-                    onBluetoothDeviceScanRequest = {
-                       service.startDiscovering(this)
-                    },
-                    onChatScreenNavigateRequested = {},
-                    onDeviceConnected = {
-                        Toast.makeText(this, "connected", Toast.LENGTH_SHORT).show()
-                    }
 
-                )
+
+        setContent {
+            val navController = rememberNavController()
+            BluetoothChatTheme {
+                NavHost(navController = navController,startDestination=Connect){
+                    composable<Connect> {
+                        ConnectScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            service = service,
+                            onBluetoothDeviceScanRequest = {
+                                service.startDiscovering(this@MainActivity)
+                            },
+                            onChatScreenNavigateRequested = {
+                                navController.navigate(Chat)
+                            },
+                            onDeviceConnected = {
+                                Toast.makeText(this@MainActivity, "connected", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                    composable<Chat>{
+                        ChatScreen(modifier=Modifier.fillMaxSize())
+                    }
+                }
             }
         }
     }
