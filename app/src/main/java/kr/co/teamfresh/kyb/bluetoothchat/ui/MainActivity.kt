@@ -17,10 +17,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
@@ -28,6 +30,7 @@ import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
+import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ConnectableDeviceListDialog
 
 class MainActivity : ComponentActivity() {
 
@@ -108,6 +111,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
+            val discoveredDevice = service.discoveredDevices.collectAsState()
+            val bluetoothState = service.state.collectAsState()
             BluetoothChatTheme {
                 NavHost(navController = navController,startDestination=Connect){
                     composable<Connect> {
@@ -115,6 +120,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize(),
                             service = service,
                             onBluetoothDeviceScanRequest = {
+                                navController.navigate(Discovery)
                                 service.startDiscovering(this@MainActivity)
                             },
                             onChatScreenNavigateRequested = {
@@ -127,6 +133,24 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<Chat>{
                         ChatScreen(modifier=Modifier.fillMaxSize())
+                    }
+                    dialog<Error>{
+                        ErrorDialog {
+                            navController.popBackStack()
+                        }
+                    }
+                    dialog<Discovery>{
+                        ConnectableDeviceListDialog(
+                            deviceList = discoveredDevice.value.toList(),
+                            bluetoothDiscoveringState = bluetoothState.value,
+                            onSelectDevice = {
+                                service.connect(it.address)
+                            },
+                            onDismiss = {
+                                service.finishDiscovering()
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }

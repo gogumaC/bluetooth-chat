@@ -78,28 +78,12 @@ fun ConnectScreen(
     onChatScreenNavigateRequested: () -> Unit
 ) {
 
-    val discoveredDevice = service?.discoveredDevices?.collectAsState()
-    val bluetoothState = service?.state?.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
         ConnectLayout(
             service = service,
             onChatScreenButtonClicked = onChatScreenNavigateRequested,
-            onBluetoothScanRequest = {
-                showDialog = true
-                onBluetoothDeviceScanRequest()
-            })
-        if (showDialog) ConnectableDeviceListDialog(
-            deviceList = discoveredDevice?.value?.toList() ?: listOf(),
-            bluetoothDiscoveringState = bluetoothState?.value ?: BluetoothState.STATE_NONE,
-            onDismiss = {
-                showDialog = false
-                service?.finishDiscovering()
-            },
-            onSelectDevice = {
-                service?.connect(it.address)
-            }
-        )
+            onBluetoothScanRequest = onBluetoothDeviceScanRequest)
+
     }
 }
 
@@ -243,73 +227,7 @@ fun BluetoothDeviceItem(
     }
 }
 
-@SuppressLint("MissingPermission")
-@Composable
-fun ConnectableDeviceListDialog(
-    deviceList: List<BluetoothDevice>,
-    bluetoothDiscoveringState: BluetoothState,
-    onSelectDevice: (BluetoothDevice) -> Unit,
-    modifier: Modifier = Modifier,
-    onDismiss: () -> Unit
-) {
-    var selectedDevice by remember { mutableStateOf<BluetoothDevice?>(null) }
-    val isFinding = (bluetoothDiscoveringState == BluetoothState.STATE_DISCOVERING)
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = modifier.aspectRatio(0.7f),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("연결 가능한 기기 목록", modifier = Modifier.padding(16.dp))
-                if (isFinding) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .size(28.dp)
-                    )
-                }
-            }
-            HorizontalDivider(color = Color.LightGray)
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                items(deviceList) {
-                    BluetoothDeviceItem(
-                        modifier = Modifier.clickable {
-                            selectedDevice = it
-                            onSelectDevice(it)
-                        },
-                        name = it.name,
-                        macAddress = it.address,
-                        borderColor = if (selectedDevice == it) Color.Blue else Color.LightGray,
-                        borderWidth = if (selectedDevice == it) 1.dp else 0.4.dp
-                    )
-                }
-            }
-        }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun ConnectableDeviceListDialogPreview() {
-    BluetoothChatTheme {
-        Surface {
-            ConnectableDeviceListDialog(
-                listOf(),
-                BluetoothState.STATE_DISCOVERING,
-                onSelectDevice = {}) {}
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
