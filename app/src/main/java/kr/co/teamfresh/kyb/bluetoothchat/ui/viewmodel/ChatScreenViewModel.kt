@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
@@ -21,8 +22,7 @@ class ChatScreenViewModel(val bluetoothService: BluetoothService? = null) : View
     private val _messageList = MutableStateFlow(listOf<Message>())
     val messageList: StateFlow<List<Message>> = _messageList.asStateFlow()
 
-    //private val _connectedDevice = MutableStateFlow<Device>(testDevice)
-    val connectedDevice=bluetoothService?.connectedDevice?.value?.toDevice()
+    val connectedDevice = bluetoothService?.connectedDevice?.value?.toDevice()
 
     private val _text = MutableStateFlow("")
     val text = _text.asStateFlow()
@@ -32,7 +32,6 @@ class ChatScreenViewModel(val bluetoothService: BluetoothService? = null) : View
             listenMessage()
         }
     }
-
 
     fun sendMessage() {
         viewModelScope.launch {
@@ -44,21 +43,21 @@ class ChatScreenViewModel(val bluetoothService: BluetoothService? = null) : View
         _text.value = ""
     }
 
-
     fun setText(text: String) {
         _text.value = text
     }
 
     private suspend fun listenMessage() = withContext(Dispatchers.IO) {
-        bluetoothService?.messageFlow?.collect { msg ->
-            _messageList.value += Message(text = msg, device = connectedDevice, isMine = false)
+        bluetoothService?.messageFlow?.drop(1)?.collect { msg ->
+            if (msg.isNotEmpty()) _messageList.value += Message(
+                text = msg,
+                device = connectedDevice,
+                isMine = false
+            )
         }
 
     }
 
-
     fun connectDevice(deviceName: String) {}
     fun disconnectDevice() {}
-
-
 }
