@@ -11,27 +11,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
-import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.util.UUID
 
 
@@ -43,16 +34,12 @@ const val MESSAGE_TOAST = 2
 
 @SuppressLint("MissingPermission")
 class BluetoothService(
-    //private val handler: Handler,
     private val bluetoothAdapter: BluetoothAdapter,
     private val activity: ComponentActivity? = null
 ) : DefaultLifecycleObserver {
 
     private val _state = MutableStateFlow(BluetoothState.STATE_NONE)
     val state: StateFlow<BluetoothState> = _state
-//    private var mConnectedThread: ConnectedThread? = null
-//    private var mConnectThread: ConnectThread? = null
-//    private var mAcceptThread: AcceptThread? = null
 
     private val myUUID =
         UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -210,8 +197,8 @@ class BluetoothService(
                     break
                 }
 
-                if(numBytes>0){
-                    _messageFlow.value=String(buffer,0,numBytes)
+                if (numBytes > 0) {
+                    _messageFlow.value = String(buffer, 0, numBytes)
                     Log.d(TAG, "listenMessage : $buffer")
                 }
             }
@@ -244,242 +231,8 @@ class BluetoothService(
         }
     }
 
-//    fun start() {
-//
-//        Log.d(TAG, "start :")
-//
-//        if (mConnectThread != null) {
-//            mConnectThread!!.cancel()
-//            mConnectThread = null
-//        }
-//        if (mConnectedThread != null) {
-//            mConnectedThread!!.cancel()
-//            mConnectedThread = null
-//        }
-//        if (mAcceptThread == null) {
-//            mAcceptThread = AcceptThread().apply { start() }
-//        }
-//    }
-//
-//
-//    fun connect(deviceAddress: String) {
-//        Log.d(TAG, "connect to: " + deviceAddress)
-//
-//        if (mConnectThread != null) {
-//            mConnectThread!!.cancel()
-//            mConnectThread = null
-//        }
-//        if (mConnectedThread != null) {
-//            mConnectedThread!!.cancel()
-//            mConnectedThread = null
-//        }
-//        if (bluetoothAdapter.isDiscovering) bluetoothAdapter.cancelDiscovery()
-//
-//        val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
-//
-//        if(device.bondState==BluetoothDevice.BOND_BONDED){
-//
-//            CoroutineScope(Dispatchers.IO).launch {
-//                val res=connectWithDevice(device)
-//                Log.d(TAG, "connect res : $res")
-//            }
-//        }else{
-//            device.createBond()
-//        }
-//
-//    }
-
-
-//    private suspend fun connectWithDevice(device: BluetoothDevice):Boolean = try{
-//        withContext(Dispatchers.IO){
-//            async {
-//                val socket = device.createRfcommSocketToServiceRecord(myUUID)
-//                socket.connect()
-//                connected(socket, device)
-//
-//            }.await()
-//            true
-//        }
-//    }catch (e:IOException){
-//        Log.e(TAG, "connect fail : $e")
-//        false
-//    }
-
-//    fun connected(socket: BluetoothSocket, device: BluetoothDevice) {
-//
-//        Log.d(TAG, "connected $device")
-//
-//        if (mConnectThread != null) {
-//            mConnectThread!!.cancel()
-//            mConnectThread = null
-//        }
-//        if (mConnectedThread != null) {
-//            mConnectedThread!!.cancel()
-//            mConnectedThread = null
-//        }
-//        if (mAcceptThread != null) {
-//            mAcceptThread!!.cancel()
-//            mAcceptThread = null
-//        }
-//        mConnectedThread = ConnectedThread(socket).apply {
-//            start()
-//        }
-//    }
-
-//    fun wirte(out: ByteArray) {
-//        mConnectedThread?.write(out)
-//    }
-//
-//    fun stop() {
-//        Log.d(TAG, "stop")
-//
-//        if (mConnectThread != null) {
-//            mConnectThread!!.cancel();
-//            mConnectThread = null;
-//        }
-//
-//        if (mConnectedThread != null) {
-//            mConnectedThread!!.cancel();
-//            mConnectedThread = null;
-//        }
-//        if (mAcceptThread != null) {
-//            mAcceptThread!!.cancel()
-//            mAcceptThread = null
-//        }
-//    }
-
     fun getPairedDeviceList(): List<BluetoothDevice> {
         return bluetoothAdapter.bondedDevices.toList()
     }
-
-//    private inner class AcceptThread : Thread() {
-//        private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-//            bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, myUUID)
-//        }
-//        override fun run() {
-//
-//            name = "AcceptThread"
-//            Log.d(TAG, "Socket's accept() method start")
-//            var shouldLoop = true
-//            while (shouldLoop) {
-//                val socket: BluetoothSocket? = try {
-//                    mmServerSocket?.accept()
-//                } catch (e: IOException) {
-//                    Log.e(TAG, "Socket's accept() method failed", e)
-//                    shouldLoop = false
-//                    null
-//                }
-//
-//                socket?.also {
-//                    //manageMyConnectedSocket(it)
-//                    connected(it, it.remoteDevice)
-//                    mmServerSocket?.close()
-//                    shouldLoop = false
-//                }
-//            }
-//
-//        }
-//
-//        fun cancel() {
-//            try {
-//                mmServerSocket?.close()
-//            } catch (e: IOException) {
-//                Log.e(TAG, "Could not close the connect socket", e)
-//            }
-//        }
-//    }
-//
-//    private inner class ConnectThread(
-//        private val myUUID: UUID,
-//        private val device: BluetoothDevice
-//    ) : Thread() {
-//
-//        private val connectSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
-//            device.createInsecureRfcommSocketToServiceRecord(myUUID)
-//        }
-//
-//        override fun run() {
-//            Log.d(
-//                TAG,
-//                "Begin ConnectThread ${device.bondState == BluetoothDevice.BOND_BONDED} | $myUUID"
-//            )
-////            if(device.bondState==BluetoothDevice.BOND_BONDED){
-//                try {
-//                    connectSocket?.connect()
-//                    Log.d(TAG, "Connect success")
-//                    _state.value= BluetoothState.STATE_CONNECTED
-//                }catch (e:IOException){
-//                    Log.e(TAG, "connect fail : $e")
-//                }
-////            }else{
-////                val res=device.createBond()
-////                Log.d(TAG,res.toString())
-////                if(res) connectSocket?.connect()
-////            }
-//
-//        }
-//
-//        fun cancel() {
-//            try {
-//                connectSocket?.close()
-//            } catch (e: IOException) {
-//                Log.e(TAG, "close() of connect" + connectSocket + " socket failed", e)
-//            }
-//        }
-//    }
-//
-//    private inner class ConnectedThread(private val mmSocket: BluetoothSocket) : Thread() {
-//        private val mmInStream: InputStream = mmSocket.inputStream
-//        private val mmOutStream: OutputStream = mmSocket.outputStream
-//        private val mmBuffer: ByteArray = ByteArray(1024)
-//
-//        override fun run() {
-//            var numBytes: Int
-//
-//            while (true) {
-//                numBytes = try {
-//                    mmInStream.read(mmBuffer)
-//                } catch (e: IOException) {
-//                    Log.d(TAG, "Input Stream was disconnected", e)
-//                    break
-//                }
-//
-//                val readMsg = handler.obtainMessage(
-//                    MESSAGE_READ, numBytes, -1, mmBuffer
-//                )
-//                readMsg.sendToTarget()
-//            }
-//        }
-//
-//        fun write(bytes: ByteArray) {
-//            try {
-//                mmOutStream.write(bytes)
-//            } catch (e: IOException) {
-//                Log.e(TAG, "Error occurred when sending data", e)
-//
-//                val writeErrorMsg = handler.obtainMessage(MESSAGE_TOAST)
-//                val bundle = Bundle().apply {
-//                    putString("toast", "Couldn't send data to the other device")
-//                }
-//                writeErrorMsg.data = bundle
-//                handler.sendMessage(writeErrorMsg)
-//                return
-//            }
-//
-//            val writtenMsg = handler.obtainMessage(
-//                MESSAGE_WRITE, -1, -1, mmBuffer
-//            )
-//            writtenMsg.sendToTarget()
-//        }
-//
-//        fun cancel() {
-//            try {
-//                mmSocket.close()
-//            } catch (e: IOException) {
-//                Log.e(TAG, "Could not close the connect socket", e)
-//            }
-//        }
-//    }
-
 
 }
