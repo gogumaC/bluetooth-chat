@@ -25,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -42,8 +43,8 @@ const val MESSAGE_TOAST = 2
 
 @SuppressLint("MissingPermission")
 class BluetoothService(
-    private val handler: Handler,
-    val bluetoothAdapter: BluetoothAdapter,
+    //private val handler: Handler,
+    private val bluetoothAdapter: BluetoothAdapter,
     private val activity: ComponentActivity? = null
 ) : DefaultLifecycleObserver {
 
@@ -67,8 +68,11 @@ class BluetoothService(
 
     private var serverSocket: BluetoothServerSocket? = null
     private var connectSocket: BluetoothSocket? = null
-    private val _connectedevice: MutableStateFlow<BluetoothDevice?> = MutableStateFlow(null)
-    val connectedDevice: StateFlow<BluetoothDevice?> = _connectedevice
+    private val _connectedDevice: MutableStateFlow<BluetoothDevice?> = MutableStateFlow(null)
+    val connectedDevice: StateFlow<BluetoothDevice?> = _connectedDevice
+
+    private val _messageFlow = MutableStateFlow("")
+    val messageFlow: StateFlow<String> = _messageFlow.asStateFlow()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -114,7 +118,6 @@ class BluetoothService(
                 Log.d("checkfor", "state changed : $it")
             }
         }
-        //start()
     }
 
     override fun onCreate(owner: LifecycleOwner) {
@@ -158,7 +161,7 @@ class BluetoothService(
 
             connectSocket?.also {
                 serverSocket?.close()
-                _connectedevice.value = it.remoteDevice
+                _connectedDevice.value = it.remoteDevice
                 _state.value = BluetoothState.STATE_CONNECTED
                 listenMessage(it)
             }
@@ -184,6 +187,8 @@ class BluetoothService(
             bluetoothAdapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(myUUID)
         try {
             connectSocket?.connect()
+            _connectedDevice.value = connectSocket?.remoteDevice
+            Log.d(TAG, "connect success")
             _state.value = BluetoothState.STATE_CONNECTED
             listenMessage(connectSocket!!)
         } catch (e: IOException) {
@@ -205,11 +210,10 @@ class BluetoothService(
                     break
                 }
 
-                if (numBytes > 0) {
-                    val readMsg = handler.obtainMessage(MESSAGE_READ, numBytes, -1, buffer)
-                    readMsg.sendToTarget()
+                if(numBytes>0){
+                    _messageFlow.value=String(buffer,0,numBytes)
+                    Log.d(TAG, "listenMessage : $buffer")
                 }
-
             }
         }
 

@@ -38,6 +38,7 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.ConnectableDeviceListDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.ErrorDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.LoadingDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
+import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -111,7 +112,7 @@ class MainActivity : ComponentActivity() {
         //블루투스 권한 확인
         requestBluetoothConnectPermission()
 
-        val service = BluetoothService(mHandler, bluetoothAdapter!!, this)
+        val service = BluetoothService( bluetoothAdapter!!, this)
 
         service.getPairedDeviceList()
 
@@ -121,6 +122,7 @@ class MainActivity : ComponentActivity() {
             val discoveredDevice = service.discoveredDevices.collectAsState()
             val bluetoothState = service.state.collectAsState()
             val savedBluetoothDevices = service.getPairedDeviceList()
+            val chatScreenViewModel=ChatScreenViewModel(service)
             BluetoothChatTheme {
                 NavHost(navController = navController, startDestination = Connect) {
                     composable<Connect> {
@@ -153,7 +155,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<Chat> {
-                        ChatScreen(modifier = Modifier.fillMaxSize())
+                        ChatScreen(modifier = Modifier.fillMaxSize(), viewModel = chatScreenViewModel)
                     }
                     dialog<Error> {
                         ErrorDialog {
