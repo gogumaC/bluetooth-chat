@@ -49,23 +49,22 @@ import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 
-
 @SuppressLint("MissingPermission")
 @Composable
 fun ConnectScreen(
     modifier: Modifier = Modifier,
-    deviceList:List<BluetoothDevice>,
+    deviceList: List<BluetoothDevice>,
     onBluetoothDeviceScanRequest: () -> Unit,
     onDeviceConnectRequest: (String) -> Unit,
     onChatScreenNavigateRequested: () -> Unit,
-    onServerSocketOpenRequested:()->Unit
+    onServerSocketOpenRequested: () -> Unit
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Column(modifier=modifier.weight(1f)) {
+        Column(modifier = modifier.weight(1f)) {
             Text("저장된 기기 목록")
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -85,18 +84,34 @@ fun ConnectScreen(
                 }
             }
         }
-        Row(modifier=Modifier.height(64.dp)){
-            Button(onClick = onServerSocketOpenRequested,modifier=Modifier.weight(1f).fillMaxHeight()) {
-                Text(text=stringResource(id = R.string.open_server_socket),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold)
+        Row(modifier = Modifier.height(64.dp)) {
+            Button(
+                onClick = onServerSocketOpenRequested,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.open_server_socket),
+                    style = TextStyle(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Spacer(modifier=Modifier.width(8.dp))
-            Button(onClick = onChatScreenNavigateRequested,modifier= Modifier
-                .fillMaxWidth()
-                .weight(1f).fillMaxHeight()) {
-                Text(text = stringResource(id = R.string.go_to_chat),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold,modifier=Modifier)
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onChatScreenNavigateRequested, modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.go_to_chat),
+                    style = TextStyle(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                )
             }
         }
-
     }
 }
 
@@ -199,12 +214,16 @@ fun BluetoothDeviceItem(
 }
 
 
-
 @Preview(showBackground = true)
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen(deviceList=listOf(),onBluetoothDeviceScanRequest = {}, onDeviceConnectRequest = {}, onChatScreenNavigateRequested = {}, onServerSocketOpenRequested = {})
+        ConnectScreen(
+            deviceList = listOf(),
+            onBluetoothDeviceScanRequest = {},
+            onDeviceConnectRequest = {},
+            onChatScreenNavigateRequested = {},
+            onServerSocketOpenRequested = {})
     }
 }
 

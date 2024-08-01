@@ -7,4 +7,7 @@
     <string name="ok">확인</string>
     <string name="error_msg">상대 기기가 근처에 있는지 확인하고,\n잠시 후 다시 시도해주세요.</string>
     <string name="open_server_socket">서버소켓 열기</string>
+    <string name="server_socket_loading">서버 소켓을 열었습니다.\n 연결을 대기중입니다.</string>
+    <string name="close_serever_socket_noti">서버 소켓을 닫았습니다.</string>
+
 </resources>

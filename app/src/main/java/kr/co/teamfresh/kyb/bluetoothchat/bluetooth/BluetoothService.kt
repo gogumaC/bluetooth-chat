@@ -163,7 +163,7 @@ class BluetoothService(
             }
         } catch (e: IOException) {
             Log.e(TAG, "open ServerSocket fail : $e")
-        } 
+        }
     }
 
     fun closeServerSocket() {

@@ -13,3 +13,9 @@ object Error
 
 @Serializable
 object Discovery
+
+@Serializable
+object ServerSocketLoading
+
+@Serializable
+data class Loading(val text:String)
