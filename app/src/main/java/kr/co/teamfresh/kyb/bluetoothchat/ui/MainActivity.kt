@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -104,7 +105,7 @@ class MainActivity : ComponentActivity() {
         //블루투스 권한 확인
         requestBluetoothConnectPermission()
 
-        val service = BluetoothService(mHandler, this, bluetoothAdapter!!)
+        val service = BluetoothService(mHandler,  bluetoothAdapter!!,this)
 
         service.getPairedDeviceList()
 
@@ -113,12 +114,13 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val discoveredDevice = service.discoveredDevices.collectAsState()
             val bluetoothState = service.state.collectAsState()
+            val savedBluetoothDevices=service.getPairedDeviceList()
             BluetoothChatTheme {
                 NavHost(navController = navController,startDestination=Connect){
                     composable<Connect> {
                         ConnectScreen(
                             modifier = Modifier.fillMaxSize(),
-                            service = service,
+                            deviceList = savedBluetoothDevices,
                             onBluetoothDeviceScanRequest = {
                                 navController.navigate(Discovery)
                                 service.startDiscovering(this@MainActivity)
@@ -126,8 +128,15 @@ class MainActivity : ComponentActivity() {
                             onChatScreenNavigateRequested = {
                                 navController.navigate(Chat)
                             },
-                            onDeviceConnected = {
-                                Toast.makeText(this@MainActivity, "connected", Toast.LENGTH_SHORT).show()
+                            onDeviceConnectRequest = {address->
+                                try{
+                                    service.connect(address)
+                                } catch (e: Exception) {
+                                    navController.navigate(Error)
+                                }
+                            },
+                            onServerSocketOpenRequested = {
+                                service.start()
                             }
                         )
                     }

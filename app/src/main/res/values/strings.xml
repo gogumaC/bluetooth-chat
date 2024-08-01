@@ -6,4 +6,5 @@
     <string name="error_occurred">에러가 발생했습니다.</string>
     <string name="ok">확인</string>
     <string name="error_msg">상대 기기가 근처에 있는지 확인하고,\n잠시 후 다시 시도해주세요.</string>
+    <string name="open_server_socket">서버소켓 열기</string>
 </resources>

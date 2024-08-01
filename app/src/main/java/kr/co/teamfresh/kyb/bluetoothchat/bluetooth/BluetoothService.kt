@@ -21,9 +21,13 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -39,7 +43,6 @@ const val MESSAGE_TOAST = 2
 @SuppressLint("MissingPermission")
 class BluetoothService(
     private val handler: Handler,
-    val context: Context,
     val bluetoothAdapter: BluetoothAdapter,
     private val activity: ComponentActivity?=null
 ):DefaultLifecycleObserver{
@@ -61,6 +64,12 @@ class BluetoothService(
         addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
     }
+
+    private var serverSocket:BluetoothServerSocket?=null
+    private var connectSocket:BluetoothSocket?=null
+    private val _connectedevice:MutableStateFlow<BluetoothDevice?> = MutableStateFlow(null)
+    val connectedDevice:StateFlow<BluetoothDevice?> = _connectedevice
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
             val action = p1?.action
@@ -133,6 +142,31 @@ class BluetoothService(
         }
     }
 
+    suspend fun openServerSocket()= withContext(Dispatchers.IO){
+        try{
+            withTimeout(30000L){
+                serverSocket=bluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME,myUUID)
+                Log.d(TAG,"open ServerSocket : $serverSocket")
+                _state.value=BluetoothState.STATE_OPEN_SERVER_SOCKET
+                connectSocket=serverSocket?.accept()
+
+                connectSocket?.also{
+                    serverSocket?.close()
+                    _connectedevice.value=it.remoteDevice
+                    _state.value=BluetoothState.STATE_CONNECTED
+                }
+            }
+        }catch (e:IOException){
+            Log.e(TAG,"open ServerSocket fail : $e")
+        }
+    }
+
+    fun closeServerSocket(){
+        if(serverSocket!=null){
+            serverSocket?.close()
+        }
+    }
+
     fun finishDiscovering(){
         if(bluetoothAdapter.isDiscovering) {
             val res=bluetoothAdapter.cancelDiscovery()
@@ -143,7 +177,7 @@ class BluetoothService(
         }
     }
 
-    private fun start() {
+    fun start() {
 
         Log.d(TAG, "start :")
 
@@ -159,6 +193,7 @@ class BluetoothService(
             mAcceptThread = AcceptThread().apply { start() }
         }
     }
+
 
     fun connect(deviceAddress: String) {
         Log.d(TAG, "connect to: " + deviceAddress)
@@ -176,17 +211,31 @@ class BluetoothService(
         val device = bluetoothAdapter.getRemoteDevice(deviceAddress)
 
         if(device.bondState==BluetoothDevice.BOND_BONDED){
-            try {
-                mConnectThread = ConnectThread(myUUID, device).apply {
-                    start()
-                }
-            } catch (e: Exception) {
-                Log.d(TAG, "connect fail : $e")
 
+            CoroutineScope(Dispatchers.IO).launch {
+                val res=connectWithDevice(device)
+                Log.d(TAG, "connect res : $res")
             }
         }else{
             device.createBond()
         }
+
+    }
+
+
+    private suspend fun connectWithDevice(device: BluetoothDevice):Boolean = try{
+        withContext(Dispatchers.IO){
+            async {
+                val socket = device.createRfcommSocketToServiceRecord(myUUID)
+                socket.connect()
+                connected(socket, device)
+
+            }.await()
+            true
+        }
+    }catch (e:IOException){
+        Log.e(TAG, "connect fail : $e")
+        false
     }
 
     fun connected(socket: BluetoothSocket, device: BluetoothDevice) {
@@ -232,14 +281,10 @@ class BluetoothService(
         }
     }
 
-
-    @SuppressLint("MissingPermission") // 이거는 앞에서 미리 검사할건데 나중에 합치는게 좋을듯
     fun getPairedDeviceList(): List<BluetoothDevice> {
         return bluetoothAdapter.bondedDevices.toList()
     }
 
-
-    @SuppressLint("MissingPermission")
     private inner class AcceptThread : Thread() {
         private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
             bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, myUUID)
@@ -277,7 +322,6 @@ class BluetoothService(
         }
     }
 
-    @SuppressLint("MissingPermission")
     private inner class ConnectThread(
         private val myUUID: UUID,
         private val device: BluetoothDevice

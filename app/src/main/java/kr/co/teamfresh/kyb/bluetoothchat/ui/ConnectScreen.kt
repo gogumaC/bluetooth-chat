@@ -3,21 +3,17 @@ package kr.co.teamfresh.kyb.bluetoothchat.ui
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
@@ -27,9 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,20 +32,11 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,39 +45,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import kr.co.teamfresh.kyb.bluetoothchat.R
-import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
-import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothState
-import kr.co.teamfresh.kyb.bluetoothchat.findActivity
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 
-@Composable
-fun ConnectScreen(
-    modifier: Modifier = Modifier,
-    service: BluetoothService? = null,
-    onBluetoothDeviceScanRequest: () -> Unit,
-    onDeviceConnected: () -> Unit,
-    onChatScreenNavigateRequested: () -> Unit
-) {
-
-    Box(modifier = modifier) {
-        ConnectLayout(
-            service = service,
-            onChatScreenButtonClicked = onChatScreenNavigateRequested,
-            onBluetoothScanRequest = onBluetoothDeviceScanRequest)
-
-    }
-}
 
 @SuppressLint("MissingPermission")
 @Composable
-fun ConnectLayout(
+fun ConnectScreen(
     modifier: Modifier = Modifier,
-    onBluetoothScanRequest: () -> Unit,
-    onChatScreenButtonClicked:()->Unit,
-    service: BluetoothService? = null
+    deviceList:List<BluetoothDevice>,
+    onBluetoothDeviceScanRequest: () -> Unit,
+    onDeviceConnectRequest: (String) -> Unit,
+    onChatScreenNavigateRequested: () -> Unit,
+    onServerSocketOpenRequested:()->Unit
 ) {
     Column(
         modifier = modifier
@@ -104,28 +69,34 @@ fun ConnectLayout(
             Text("저장된 기기 목록")
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(service?.getPairedDeviceList() ?: listOf()) {
+                items(deviceList) {
                     val name = it.name
                     val address = it.address
                     SwipeDeviceItem(
                         name = name,
                         macAddress = address,
-                        requestConnectDevice = { service?.connect(address) },
+                        requestConnectDevice = { onDeviceConnectRequest(address) },
                         requestDeleteDevice = {})
                 }
                 item {
-                    TextButton(onClick = { onBluetoothScanRequest() }) {
+                    TextButton(onClick = { onBluetoothDeviceScanRequest() }) {
                         Text(text = "+ 새 기기 연결하기", modifier = Modifier)
                     }
                 }
             }
         }
-        
-        Button(onClick = onChatScreenButtonClicked,modifier= Modifier
-            .fillMaxWidth()
-            .height(64.dp)) {
-            Text(text = stringResource(id = R.string.go_to_chat),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold,modifier=Modifier)
+        Row(modifier=Modifier.height(64.dp)){
+            Button(onClick = onServerSocketOpenRequested,modifier=Modifier.weight(1f).fillMaxHeight()) {
+                Text(text=stringResource(id = R.string.open_server_socket),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier=Modifier.width(8.dp))
+            Button(onClick = onChatScreenNavigateRequested,modifier= Modifier
+                .fillMaxWidth()
+                .weight(1f).fillMaxHeight()) {
+                Text(text = stringResource(id = R.string.go_to_chat),style=TextStyle(fontSize = 14.sp), fontWeight = FontWeight.Bold,modifier=Modifier)
+            }
         }
+
     }
 }
 
@@ -233,7 +204,7 @@ fun BluetoothDeviceItem(
 @Composable
 fun ConnectScreenPreview() {
     BluetoothChatTheme {
-        ConnectScreen(onBluetoothDeviceScanRequest = {}, onDeviceConnected = {}, onChatScreenNavigateRequested = {})
+        ConnectScreen(deviceList=listOf(),onBluetoothDeviceScanRequest = {}, onDeviceConnectRequest = {}, onChatScreenNavigateRequested = {}, onServerSocketOpenRequested = {})
     }
 }
 
