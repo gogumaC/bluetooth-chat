@@ -160,6 +160,7 @@ class BluetoothService(
                 serverSocket?.close()
                 _connectedevice.value = it.remoteDevice
                 _state.value = BluetoothState.STATE_CONNECTED
+                listenMessage(it)
             }
         } catch (e: IOException) {
             Log.e(TAG, "open ServerSocket fail : $e")
@@ -184,6 +185,7 @@ class BluetoothService(
         try {
             connectSocket?.connect()
             _state.value = BluetoothState.STATE_CONNECTED
+            listenMessage(connectSocket!!)
         } catch (e: IOException) {
             Log.e(TAG, "connect fail : $e")
         }
