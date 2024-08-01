@@ -1,4 +1,4 @@
-package kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel
+package kr.co.teamfresh.kyb.bluetoothchat.ui
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
@@ -31,7 +31,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothState
-import kr.co.teamfresh.kyb.bluetoothchat.ui.BluetoothDeviceItem
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
 
 @SuppressLint("MissingPermission")

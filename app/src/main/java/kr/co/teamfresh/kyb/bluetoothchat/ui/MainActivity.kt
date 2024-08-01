@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,13 +24,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
-import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ConnectableDeviceListDialog
 
 class MainActivity : ComponentActivity() {
 
@@ -130,13 +131,18 @@ class MainActivity : ComponentActivity() {
                             },
                             onDeviceConnectRequest = {address->
                                 try{
-                                    service.connect(address)
+                                    CoroutineScope(Dispatchers.Main).launch{
+                                        service.requestConnect(address)
+                                    }
+
                                 } catch (e: Exception) {
                                     navController.navigate(Error)
                                 }
                             },
                             onServerSocketOpenRequested = {
-                                service.start()
+                                CoroutineScope(Dispatchers.Main).launch{
+                                    service.openServerSocket()
+                                }
                             }
                         )
                     }
@@ -153,7 +159,7 @@ class MainActivity : ComponentActivity() {
                             deviceList = discoveredDevice.value.toList(),
                             bluetoothDiscoveringState = bluetoothState.value,
                             onSelectDevice = {
-                                service.connect(it.address)
+                                //service.connect(it.address)
                             },
                             onDismiss = {
                                 service.finishDiscovering()
