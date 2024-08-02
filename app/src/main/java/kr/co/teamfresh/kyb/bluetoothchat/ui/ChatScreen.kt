@@ -60,7 +60,7 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 @Composable
 fun ChatScreen(
     modifier: Modifier = Modifier,
-    viewModel: ChatScreenViewModel = ChatScreenViewModel()
+    viewModel: ChatScreenViewModel =ChatScreenViewModel()
 ) {
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
@@ -71,11 +71,13 @@ fun ChatScreen(
             .fillMaxSize()
     ) {
         Column(verticalArrangement = Arrangement.SpaceBetween) {
-            DeviceInfo(
-                deviceName = connectedDevice.name,
-                deviceImage = connectedDevice.image,
-                backgroundColor = connectedDevice.color
-            )
+            connectedDevice?.let{
+                DeviceInfo(
+                    deviceName = it.name,
+                    deviceImage = it.image,
+                    backgroundColor = it.color
+                )
+            }
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(

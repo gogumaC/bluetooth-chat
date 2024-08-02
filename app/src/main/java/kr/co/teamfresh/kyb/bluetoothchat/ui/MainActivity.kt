@@ -19,18 +19,26 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
+import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.ConnectableDeviceListDialog
+import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.ErrorDialog
+import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.LoadingDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
-import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ConnectableDeviceListDialog
+import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -104,7 +112,7 @@ class MainActivity : ComponentActivity() {
         //블루투스 권한 확인
         requestBluetoothConnectPermission()
 
-        val service = BluetoothService(mHandler, this, bluetoothAdapter!!)
+        val service = BluetoothService( bluetoothAdapter!!, this)
 
         service.getPairedDeviceList()
 
@@ -113,12 +121,14 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val discoveredDevice = service.discoveredDevices.collectAsState()
             val bluetoothState = service.state.collectAsState()
+            val savedBluetoothDevices = service.getPairedDeviceList()
+            val chatScreenViewModel=ChatScreenViewModel(service)
             BluetoothChatTheme {
-                NavHost(navController = navController,startDestination=Connect){
+                NavHost(navController = navController, startDestination = Connect) {
                     composable<Connect> {
                         ConnectScreen(
                             modifier = Modifier.fillMaxSize(),
-                            service = service,
+                            deviceList = savedBluetoothDevices,
                             onBluetoothDeviceScanRequest = {
                                 navController.navigate(Discovery)
                                 service.startDiscovering(this@MainActivity)
@@ -126,30 +136,66 @@ class MainActivity : ComponentActivity() {
                             onChatScreenNavigateRequested = {
                                 navController.navigate(Chat)
                             },
-                            onDeviceConnected = {
-                                Toast.makeText(this@MainActivity, "connected", Toast.LENGTH_SHORT).show()
+                            onDeviceConnectRequest = { address ->
+                                try {
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        service.requestConnect(address)
+                                    }
+
+                                } catch (e: Exception) {
+                                    navController.navigate(Error)
+                                }
+                            },
+                            onServerSocketOpenRequested = {
+                                navController.navigate(ServerSocketLoading)
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    service.openServerSocket()
+                                }
                             }
                         )
                     }
-                    composable<Chat>{
-                        ChatScreen(modifier=Modifier.fillMaxSize())
+                    composable<Chat> {
+                        ChatScreen(modifier = Modifier.fillMaxSize(), viewModel = chatScreenViewModel)
                     }
-                    dialog<Error>{
+                    dialog<Error> {
                         ErrorDialog {
                             navController.popBackStack()
                         }
                     }
-                    dialog<Discovery>{
+                    dialog<Discovery> {
                         ConnectableDeviceListDialog(
                             deviceList = discoveredDevice.value.toList(),
                             bluetoothDiscoveringState = bluetoothState.value,
                             onSelectDevice = {
-                                service.connect(it.address)
+                                //service.connect(it.address)
                             },
                             onDismiss = {
                                 service.finishDiscovering()
                                 navController.popBackStack()
                             }
+                        )
+                    }
+                    dialog<ServerSocketLoading> {
+                        val toastMsg = stringResource(id = R.string.close_serever_socket_noti)
+                        LoadingDialog(
+                            modifier = Modifier,
+                            onDismissRequest = {
+                                navController.popBackStack()
+                                service.closeServerSocket()
+                                Toast.makeText(this@MainActivity, toastMsg, Toast.LENGTH_SHORT)
+                                    .show()
+                            },
+                            text = stringResource(id = R.string.open_server_socket)
+                        )
+
+                    }
+                    dialog<Loading> { backStackEntry ->
+                        val loading: Loading = backStackEntry.toRoute()
+
+                        LoadingDialog(
+                            modifier = Modifier,
+                            onDismissRequest = { navController.popBackStack() },
+                            text = loading.text
                         )
                     }
                 }
