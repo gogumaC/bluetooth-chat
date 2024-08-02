@@ -104,6 +104,12 @@ class BluetoothService(
             _state.collect {
                 Log.d("checkfor", "state changed : $it")
             }
+
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            _connectedDevice.collect {
+                Log.d(TAG,"connectedDevice changed : $it, ${it?.name}")
+            }
         }
     }
 
@@ -150,6 +156,7 @@ class BluetoothService(
                 serverSocket?.close()
                 _connectedDevice.value = it.remoteDevice
                 _state.value = BluetoothState.STATE_CONNECTED
+                Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
                 listenMessage(it)
             }
         } catch (e: IOException) {
@@ -159,6 +166,7 @@ class BluetoothService(
 
     fun closeServerSocket() {
         if (serverSocket != null) {
+            Log.d(TAG, "close ServerSocket : $serverSocket")
             serverSocket?.close()
         }
     }
@@ -170,12 +178,14 @@ class BluetoothService(
         if (serverSocket != null) {
             serverSocket?.close()
         }
+
+        val device=bluetoothAdapter.getRemoteDevice(address)
         connectSocket =
-            bluetoothAdapter.getRemoteDevice(address).createRfcommSocketToServiceRecord(myUUID)
+            device.createRfcommSocketToServiceRecord(myUUID)
         try {
             connectSocket?.connect()
             _connectedDevice.value = connectSocket?.remoteDevice
-            Log.d(TAG, "connect success")
+            Log.d(TAG, "connect success.\n connected with $device")
             _state.value = BluetoothState.STATE_CONNECTED
             listenMessage(connectSocket!!)
         } catch (e: IOException) {

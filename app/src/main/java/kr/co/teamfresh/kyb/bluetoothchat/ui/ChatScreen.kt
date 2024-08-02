@@ -55,7 +55,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
-import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
 import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 @Composable
@@ -65,7 +64,7 @@ fun ChatScreen(
 ) {
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
-    val connectedDevice = viewModel.connectedDevice
+    val connectedDevice by viewModel.connectedDevice.collectAsState()
 
     Surface(
         modifier = modifier
@@ -74,9 +73,9 @@ fun ChatScreen(
         Column(verticalArrangement = Arrangement.SpaceBetween) {
             connectedDevice?.let{
                 DeviceInfo(
-                    deviceName = connectedDevice.name,
-                    deviceImage = connectedDevice.image,
-                    backgroundColor = connectedDevice.color
+                    deviceName = it.name,
+                    deviceImage = it.image,
+                    backgroundColor = it.color
                 )
             }
             LazyColumn(
