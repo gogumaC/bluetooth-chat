@@ -67,14 +67,14 @@ class BluetoothService(
     private val _connectedDevice: MutableStateFlow<BluetoothDevice?> = MutableStateFlow(null)
     val connectedDevice: StateFlow<BluetoothDevice?> = _connectedDevice
 
-    private val _pairedDeviceList=MutableStateFlow(bluetoothAdapter.bondedDevices.toList())
-    val pairedDeviceList:StateFlow<List<BluetoothDevice>> = _pairedDeviceList
+    private val _pairedDeviceList = MutableStateFlow(bluetoothAdapter.bondedDevices.toList())
+    val pairedDeviceList: StateFlow<List<BluetoothDevice>> = _pairedDeviceList
 
     private val _messageFlow = MutableStateFlow("")
     val messageFlow: StateFlow<String> = _messageFlow.asStateFlow()
 
-    private val connectingScope=CoroutineScope(Job()+Dispatchers.IO)
-    private val connectingDeviceJobMap= mutableMapOf<String,Job>()
+    private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
+    private val connectingDeviceJobMap = mutableMapOf<String, Job>()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -103,29 +103,33 @@ class BluetoothService(
                     _state.value = BluetoothState.STATE_DISCOVERING_FINISHED
 
                 }
-                BluetoothDevice.ACTION_BOND_STATE_CHANGED->{
+
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
                     val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
                     ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                     Log.d(TAG, "pairedDevice : ${device?.name} ${device?.address}")
 
-                    val bondState=p1.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE,BluetoothDevice.ERROR)
+                    val bondState =
+                        p1.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR)
 
-                    when(bondState){
-                        BluetoothDevice.BOND_NONE->{
+                    when (bondState) {
+                        BluetoothDevice.BOND_NONE -> {
                             Log.d(TAG, "none")
-                            _pairingState.value=BluetoothState.STATE_NONE
+                            _pairingState.value = BluetoothState.STATE_NONE
                         }
-                        BluetoothDevice.BOND_BONDING-> {
+
+                        BluetoothDevice.BOND_BONDING -> {
                             Log.d(TAG, "bonding")
-                            _pairingState.value=BluetoothState.STATE_BONDING
+                            _pairingState.value = BluetoothState.STATE_BONDING
                         }
-                        BluetoothDevice.BOND_BONDED-> {
+
+                        BluetoothDevice.BOND_BONDED -> {
                             Log.d(TAG, "bonded")
-                            _pairingState.value=BluetoothState.STATE_BONDED
+                            _pairingState.value = BluetoothState.STATE_BONDED
                             device?.let {
-                                _pairedDeviceList.value=pairedDeviceList.value+device
+                                _pairedDeviceList.value = pairedDeviceList.value + device
                             }
                         }
                     }
@@ -153,15 +157,16 @@ class BluetoothService(
         }
         CoroutineScope(Dispatchers.Main).launch {
             _connectedDevice.collect {
-                Log.d(TAG,"connectedDevice changed : $it, ${it?.name}")
+                Log.d(TAG, "connectedDevice changed : $it, ${it?.name}")
             }
         }
     }
 
     override fun onCreate(owner: LifecycleOwner) {
-        activity?.let{
+        activity?.let {
             it.registerReceiver(receiver, filter)
-            bluetoothScanLauncher = it.registerForActivityResult(ActivityResultContracts.StartActivityForResult()){}
+            bluetoothScanLauncher =
+                it.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
         }
         super.onCreate(owner)
     }
@@ -172,10 +177,11 @@ class BluetoothService(
         super.onDestroy(owner)
     }
 
-    fun setBluetoothDiscoverable(){
-        val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
-        }
+    fun setBluetoothDiscoverable() {
+        val discoverableIntent: Intent =
+            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
+            }
         bluetoothScanLauncher.launch(discoverableIntent)
     }
 
@@ -195,9 +201,9 @@ class BluetoothService(
     }
 
     fun requestPairing(address: String): Flow<BluetoothState> {
-        val device=bluetoothAdapter.getRemoteDevice(address)
+        val device = bluetoothAdapter.getRemoteDevice(address)
         device.createBond()
-        _pairingState.value=BluetoothState.STATE_START_BOND
+        _pairingState.value = BluetoothState.STATE_START_BOND
         return pairingState
     }
 
@@ -221,11 +227,12 @@ class BluetoothService(
                 _connectedDevice.value = it.remoteDevice
                 _state.value = BluetoothState.STATE_CONNECTED
                 Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
-                val device=it.remoteDevice
-                if(device.address in connectingDeviceJobMap){
+                val device = it.remoteDevice
+                if (device.address in connectingDeviceJobMap) {
                     connectingDeviceJobMap[device.address]?.cancel()
                 }
-                connectingDeviceJobMap[device.address]=connectingScope.launch {listenMessage(it)}
+                connectingDeviceJobMap[device.address] =
+                    connectingScope.launch { listenMessage(it) }
 
             }
         } catch (e: IOException) {
@@ -250,7 +257,7 @@ class BluetoothService(
             serverSocket?.close()
         }
 
-        val device=bluetoothAdapter.getRemoteDevice(address)
+        val device = bluetoothAdapter.getRemoteDevice(address)
         connectSocket =
             device.createRfcommSocketToServiceRecord(myUUID)
         try {
@@ -259,10 +266,11 @@ class BluetoothService(
             Log.d(TAG, "connect success.\n connected with $device")
             _state.value = BluetoothState.STATE_CONNECTED
 
-            if(address in connectingDeviceJobMap){
+            if (address in connectingDeviceJobMap) {
                 connectingDeviceJobMap[address]?.cancel()
             }
-            connectingDeviceJobMap[address]=connectingScope.launch { listenMessage(connectSocket!!) }
+            connectingDeviceJobMap[address] =
+                connectingScope.launch { listenMessage(connectSocket!!) }
 
         } catch (e: IOException) {
             Log.e(TAG, "connect fail : $e")
@@ -301,10 +309,10 @@ class BluetoothService(
         }
     }
 
-    fun cancelConnect():Boolean {
+    fun cancelConnect(): Boolean {
         try {
-            _connectedDevice.value=null
-            _state.value=BluetoothState.STATE_NONE
+            _connectedDevice.value = null
+            _state.value = BluetoothState.STATE_NONE
             connectSocket?.close()
         } catch (e: IOException) {
             Log.e(TAG, "Could not close the connect socket", e)

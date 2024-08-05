@@ -13,9 +13,13 @@ import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.ui.DisconnectAlertDialog
 
 @Composable
-fun DisconnectAlertDialog(onConfirmed: () -> Unit, onCanceled: () -> Unit, modifier: Modifier = Modifier) {
+fun DisconnectAlertDialog(
+    onConfirmed: () -> Unit,
+    onCanceled: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     AlertDialog(
-        modifier=modifier,
+        modifier = modifier,
         onDismissRequest = onCanceled,
         confirmButton = {
             Button(onClick = onConfirmed) {

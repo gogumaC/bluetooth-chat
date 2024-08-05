@@ -116,14 +116,14 @@ class MainActivity : ComponentActivity() {
         //블루투스 권한 확인
         requestBluetoothConnectPermission()
 
-        val service = BluetoothService( bluetoothAdapter!!, this)
+        val service = BluetoothService(bluetoothAdapter!!, this)
 
         setContent {
             val navController = rememberNavController()
             val discoveredDevice = service.discoveredDevices.collectAsState()
             val bluetoothState = service.state.collectAsState()
             val savedBluetoothDevices = service.pairedDeviceList.collectAsState()
-            val chatScreenViewModel=ChatScreenViewModel(service)
+            val chatScreenViewModel = ChatScreenViewModel(service)
             BluetoothChatTheme {
                 NavHost(navController = navController, startDestination = Connect) {
                     composable<Connect> {
@@ -140,13 +140,24 @@ class MainActivity : ComponentActivity() {
                             onDeviceConnectRequest = { address ->
                                 try {
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        navController.navigate(Loading(ContextCompat.getString(this@MainActivity,R.string.connecting)))
-                                        val res=async { service.requestConnect(address) }.await()
+                                        navController.navigate(
+                                            Loading(
+                                                ContextCompat.getString(
+                                                    this@MainActivity,
+                                                    R.string.connecting
+                                                )
+                                            )
+                                        )
+                                        val res = async { service.requestConnect(address) }.await()
                                         navController.popBackStack()
-                                        if(res){
-                                            Toast.makeText(this@MainActivity,"연결되었습니다.",Toast.LENGTH_SHORT).show()
+                                        if (res) {
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "연결되었습니다.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                             navController.navigate(Chat)
-                                        }else{
+                                        } else {
                                             navController.navigate(Error)
                                         }
                                     }
@@ -158,11 +169,11 @@ class MainActivity : ComponentActivity() {
                             onServerSocketOpenRequested = {
                                 navController.navigate(ServerSocketLoading)
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    val res=async { service.openServerSocket() }.await()
+                                    val res = async { service.openServerSocket() }.await()
                                     navController.popBackStack()
-                                    if(res){
+                                    if (res) {
                                         navController.navigate(Chat)
-                                    }else{
+                                    } else {
                                         navController.navigate(Error)
                                     }
                                 }
@@ -173,9 +184,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<Chat> {
-                        ChatScreen(modifier = Modifier.fillMaxSize(), viewModel = chatScreenViewModel, onBackPressed = {
-                            navController.navigate(DisconnectAlertDialog)
-                        })
+                        ChatScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            viewModel = chatScreenViewModel,
+                            onBackPressed = {
+                                navController.navigate(DisconnectAlertDialog)
+                            })
                     }
                     dialog<Error> {
                         ErrorDialog {
@@ -187,22 +201,39 @@ class MainActivity : ComponentActivity() {
                             deviceList = discoveredDevice.value.toList(),
                             bluetoothDiscoveringState = bluetoothState.value,
                             onSelectDevice = {
-                                CoroutineScope(Dispatchers.IO).launch{
-                                    service.requestPairing(it.address).collect{state->
-                                        withContext(Dispatchers.Main){
-                                            when(state){
-                                                BluetoothState.STATE_BONDING->{
-                                                    navController.navigate(Loading(ContextCompat.getString(this@MainActivity,R.string.request_paring_alert)))
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    service.requestPairing(it.address).collect { state ->
+                                        withContext(Dispatchers.Main) {
+                                            when (state) {
+                                                BluetoothState.STATE_BONDING -> {
+                                                    navController.navigate(
+                                                        Loading(
+                                                            ContextCompat.getString(
+                                                                this@MainActivity,
+                                                                R.string.request_paring_alert
+                                                            )
+                                                        )
+                                                    )
                                                 }
-                                                BluetoothState.STATE_BONDED->{
-                                                    Toast.makeText(this@MainActivity,ContextCompat.getString(this@MainActivity,R.string.complete_pairing),Toast.LENGTH_SHORT).show()
+
+                                                BluetoothState.STATE_BONDED -> {
+                                                    Toast.makeText(
+                                                        this@MainActivity,
+                                                        ContextCompat.getString(
+                                                            this@MainActivity,
+                                                            R.string.complete_pairing
+                                                        ),
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                     navController.popBackStack<Connect>(inclusive = false)
                                                 }
-                                                BluetoothState.STATE_NONE->{
+
+                                                BluetoothState.STATE_NONE -> {
                                                     navController.popBackStack()
                                                     navController.navigate(Error)
                                                 }
-                                                else->{}
+
+                                                else -> {}
                                             }
                                         }
                                     }
@@ -237,15 +268,29 @@ class MainActivity : ComponentActivity() {
                             text = loading.text
                         )
                     }
-                    dialog<DisconnectAlertDialog>{
+                    dialog<DisconnectAlertDialog> {
                         DisconnectAlertDialog(
                             onConfirmed = {
-                                val res=service.cancelConnect()
-                                if (res){
+                                val res = service.cancelConnect()
+                                if (res) {
                                     navController.popBackStack<Chat>(inclusive = true)
-                                    Toast.makeText(this@MainActivity, ContextCompat.getString(this@MainActivity,R.string.disconnected),Toast.LENGTH_SHORT).show()
-                                }else{
-                                    Toast.makeText(this@MainActivity, ContextCompat.getString(this@MainActivity,R.string.error_occurred),Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        ContextCompat.getString(
+                                            this@MainActivity,
+                                            R.string.disconnected
+                                        ),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        ContextCompat.getString(
+                                            this@MainActivity,
+                                            R.string.error_occurred
+                                        ),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             },
                             onCanceled = {

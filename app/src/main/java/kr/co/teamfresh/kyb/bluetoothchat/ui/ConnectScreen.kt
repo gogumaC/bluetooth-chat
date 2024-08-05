@@ -99,7 +99,7 @@ fun ConnectScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            Spacer(modifier=Modifier.size(8.dp))
+            Spacer(modifier = Modifier.size(8.dp))
             Button(
                 onClick = onServerSocketOpenRequested,
                 modifier = Modifier

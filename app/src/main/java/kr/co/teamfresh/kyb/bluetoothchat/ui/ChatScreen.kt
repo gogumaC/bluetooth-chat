@@ -62,14 +62,14 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 @Composable
 fun ChatScreen(
-    onBackPressed:()->Unit,
+    onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ChatScreenViewModel =ChatScreenViewModel()
+    viewModel: ChatScreenViewModel = ChatScreenViewModel()
 ) {
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
     val connectedDevice by viewModel.connectedDevice.collectAsState()
-    val backHandlerEnabled = connectedDevice!==null
+    val backHandlerEnabled = connectedDevice !== null
     BackHandler(backHandlerEnabled) {
         onBackPressed()
     }
@@ -79,7 +79,7 @@ fun ChatScreen(
             .fillMaxSize()
     ) {
         Column(verticalArrangement = Arrangement.SpaceBetween) {
-            connectedDevice?.let{
+            connectedDevice?.let {
                 DeviceInfo(
                     deviceName = it.name,
                     deviceImage = it.image,
@@ -320,6 +320,6 @@ fun ChatInput(
 @Composable
 fun ChatScreenPreview() {
     BluetoothChatTheme {
-        ChatScreen(modifier=Modifier.fillMaxSize(),onBackPressed = {})
+        ChatScreen(modifier = Modifier.fillMaxSize(), onBackPressed = {})
     }
 }
