@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.ConnectBackground
 
 
 @SuppressLint("MissingPermission")
@@ -139,7 +140,7 @@ fun SwipeDeviceItem(
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = RoundedCornerShape(8.dp),
-            color = Color.Blue
+            color = ConnectBackground
         ) {
 
             Box(
