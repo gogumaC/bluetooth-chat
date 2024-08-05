@@ -46,8 +46,7 @@ class BluetoothService(
     private val _state = MutableStateFlow(BluetoothState.STATE_NONE)
     val state: StateFlow<BluetoothState> = _state
 
-    private val _pairingState = MutableStateFlow(BluetoothState.STATE_NONE)
-    val pairingState: StateFlow<BluetoothState> = _pairingState
+    private val pairingState = MutableStateFlow(BluetoothState.STATE_NONE)
 
     private val myUUID =
         UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
@@ -119,17 +118,17 @@ class BluetoothService(
                     when (bondState) {
                         BluetoothDevice.BOND_NONE -> {
                             Log.d(TAG, "none")
-                            _pairingState.value = BluetoothState.STATE_NONE
+                            pairingState.value = BluetoothState.STATE_NONE
                         }
 
                         BluetoothDevice.BOND_BONDING -> {
                             Log.d(TAG, "bonding")
-                            _pairingState.value = BluetoothState.STATE_BONDING
+                            pairingState.value = BluetoothState.STATE_BONDING
                         }
 
                         BluetoothDevice.BOND_BONDED -> {
                             Log.d(TAG, "bonded")
-                            _pairingState.value = BluetoothState.STATE_BONDED
+                            pairingState.value = BluetoothState.STATE_BONDED
                             device?.let {
                                 _pairedDeviceList.value = pairedDeviceList.value + device
                             }
@@ -205,7 +204,7 @@ class BluetoothService(
     fun requestPairing(address: String): Flow<BluetoothState> {
         val device = bluetoothAdapter.getRemoteDevice(address)
         device.createBond()
-        _pairingState.value = BluetoothState.STATE_START_BOND
+        pairingState.value = BluetoothState.STATE_START_BOND
         return pairingState
     }
 
