@@ -97,20 +97,6 @@ fun ConnectScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = onChatScreenNavigateRequested, modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
-                Text(
-                    text = stringResource(id = R.string.go_to_chat),
-                    style = TextStyle(fontSize = 14.sp),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                )
-            }
         }
     }
 }
