@@ -243,12 +243,16 @@ class BluetoothService(
         }
     }
 
-    fun cancelConnect() {
+    fun cancelConnect():Boolean {
         try {
+            _connectedDevice.value=null
+            _state.value=BluetoothState.STATE_NONE
             connectSocket?.close()
         } catch (e: IOException) {
             Log.e(TAG, "Could not close the connect socket", e)
+            return false
         }
+        return true
     }
 
     fun finishDiscovering() {

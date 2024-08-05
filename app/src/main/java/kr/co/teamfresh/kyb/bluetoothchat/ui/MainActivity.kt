@@ -219,7 +219,13 @@ class MainActivity : ComponentActivity() {
                     dialog<DisconnectAlertDialog>{
                         DisconnectAlertDialog(
                             onConfirmed = {
-                                navController.popBackStack<Connect>(inclusive = false)
+                                val res=service.cancelConnect()
+                                if (res){
+                                    navController.popBackStack<Chat>(inclusive = true)
+                                    Toast.makeText(this@MainActivity, ContextCompat.getString(this@MainActivity,R.string.disconnected),Toast.LENGTH_SHORT).show()
+                                }else{
+                                    Toast.makeText(this@MainActivity, ContextCompat.getString(this@MainActivity,R.string.error_occurred),Toast.LENGTH_SHORT).show()
+                                }
                             },
                             onCanceled = {
                                 navController.popBackStack()

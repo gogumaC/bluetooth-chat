@@ -2,7 +2,8 @@
     <string name="app_name">BluetoothChat</string>
     <string name="connecting_with"> 와 연결중</string>
     <string name="connecting">연결중</string>
-    <string name="connected">연결</string>
+    <string name="connected">연결됨</string>
+    <string name="disconnected">연결 해제</string>
     <string name="permission_required">해당 작업을 시작하기 위해서는 블루투스 권한이 필요합니다.</string>
     <string name="go_to_chat">채팅 화면으로 이동</string>
     <string name="error_occurred">에러가 발생했습니다.</string>
