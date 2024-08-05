@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
@@ -56,6 +57,7 @@ fun ConnectScreen(
     deviceList: List<BluetoothDevice>,
     onBluetoothDeviceScanRequest: () -> Unit,
     onDeviceConnectRequest: (String) -> Unit,
+    onSetDiscoverableRequest: () -> Unit,
     onChatScreenNavigateRequested: () -> Unit,
     onServerSocketOpenRequested: () -> Unit
 ) {
@@ -85,6 +87,19 @@ fun ConnectScreen(
             }
         }
         Row(modifier = Modifier.height(64.dp)) {
+            Button(
+                onClick = onSetDiscoverableRequest,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.set_discoverable),
+                    style = TextStyle(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier=Modifier.size(8.dp))
             Button(
                 onClick = onServerSocketOpenRequested,
                 modifier = Modifier
@@ -209,7 +224,8 @@ fun ConnectScreenPreview() {
             onBluetoothDeviceScanRequest = {},
             onDeviceConnectRequest = {},
             onChatScreenNavigateRequested = {},
-            onServerSocketOpenRequested = {})
+            onServerSocketOpenRequested = {},
+            onSetDiscoverableRequest = {})
     }
 }
 

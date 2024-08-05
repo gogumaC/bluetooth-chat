@@ -167,6 +167,9 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate(Error)
                                     }
                                 }
+                            },
+                            onSetDiscoverableRequest = {
+                                service.setBluetoothDiscoverable()
                             }
                         )
                     }
@@ -185,7 +188,15 @@ class MainActivity : ComponentActivity() {
                             deviceList = discoveredDevice.value.toList(),
                             bluetoothDiscoveringState = bluetoothState.value,
                             onSelectDevice = {
-                                //service.connect(it.address)
+                                CoroutineScope(Dispatchers.Main).launch{
+                                    val res=async { service.requestConnect(it.address)}.await()
+                                    navController.popBackStack()
+                                    if(res){
+                                        navController.navigate(Chat)
+                                    }else {
+                                        navController.navigate(Error)
+                                    }
+                                }
                             },
                             onDismiss = {
                                 service.finishDiscovering()

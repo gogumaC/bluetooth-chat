@@ -13,6 +13,7 @@ import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
@@ -97,6 +98,8 @@ class BluetoothService(
         }
     }
 
+    private val bluetoothScanLauncher = activity?.registerForActivityResult(ActivityResultContracts.StartActivityForResult()){}
+
     init {
         activity?.lifecycle?.addObserver(this)
         //블루투스가 활성화 되어있는지 확인
@@ -127,6 +130,13 @@ class BluetoothService(
         activity?.unregisterReceiver(receiver)
         connectingScope.cancel()
         super.onDestroy(owner)
+    }
+
+    fun setBluetoothDiscoverable(){
+        val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
+        }
+        bluetoothScanLauncher?.launch(discoverableIntent)
     }
 
     fun startDiscovering(activity: Activity) {
