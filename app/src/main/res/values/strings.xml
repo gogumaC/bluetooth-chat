@@ -11,6 +11,8 @@
     <string name="open_server_socket">서버소켓 열기</string>
     <string name="server_socket_loading">서버 소켓을 열었습니다.\n 연결을 대기중입니다.</string>
     <string name="close_serever_socket_noti">서버 소켓을 닫았습니다.</string>
+    <string name="disconnect_alert">연결을 종료합니다.</string>
+    <string name="cancel">취소</string>
 
 
 </resources>

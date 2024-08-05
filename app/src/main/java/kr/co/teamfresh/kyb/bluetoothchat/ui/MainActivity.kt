@@ -36,6 +36,7 @@ import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
 import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.ConnectableDeviceListDialog
+import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.DisconnectAlertDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.ErrorDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.dialogs.LoadingDialog
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
@@ -149,7 +150,6 @@ class MainActivity : ComponentActivity() {
                                         }else{
                                             navController.navigate(Error)
                                         }
-
                                     }
 
                                 } catch (e: Exception) {
@@ -172,7 +172,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<Chat> {
                         ChatScreen(modifier = Modifier.fillMaxSize(), viewModel = chatScreenViewModel, onBackPressed = {
-                            Toast.makeText(this@MainActivity,"back",Toast.LENGTH_SHORT).show()
+                            navController.navigate(DisconnectAlertDialog)
                         })
                     }
                     dialog<Error> {
@@ -215,6 +215,15 @@ class MainActivity : ComponentActivity() {
                             onDismissRequest = { navController.popBackStack() },
                             text = loading.text
                         )
+                    }
+                    dialog<DisconnectAlertDialog>{
+                        DisconnectAlertDialog(
+                            onConfirmed = {
+                                navController.popBackStack<Connect>(inclusive = false)
+                            },
+                            onCanceled = {
+                                navController.popBackStack()
+                            })
                     }
                 }
             }

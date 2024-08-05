@@ -69,7 +69,7 @@ fun ChatScreen(
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
     val connectedDevice by viewModel.connectedDevice.collectAsState()
-    val backHandlerEnabled by remember{ mutableStateOf(connectedDevice!==null) }
+    val backHandlerEnabled = connectedDevice!==null
     BackHandler(backHandlerEnabled) {
         onBackPressed()
     }

@@ -19,3 +19,6 @@ object ServerSocketLoading
 
 @Serializable
 data class Loading(val text:String)
+
+@Serializable
+object DisconnectAlertDialog
