@@ -27,6 +27,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -99,14 +100,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-//        bluetoothSettingLauncher =
-//            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-//
-//            }
-//        bluetoothScanLauncher =
-//            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-//
-//            }
 
         //블루투스가 기기에서 지원되는지 확인
         if (bluetoothAdapter == null) {
@@ -138,33 +131,7 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(Chat)
                             },
                             onDeviceConnectRequest = { address ->
-                                try {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        navController.navigate(
-                                            Loading(
-                                                ContextCompat.getString(
-                                                    this@MainActivity,
-                                                    R.string.connecting
-                                                )
-                                            )
-                                        )
-                                        val res = async { service.requestConnect(address) }.await()
-                                        navController.popBackStack()
-                                        if (res) {
-                                            Toast.makeText(
-                                                this@MainActivity,
-                                                "연결되었습니다.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            navController.navigate(Chat)
-                                        } else {
-                                            navController.navigate(Error)
-                                        }
-                                    }
-
-                                } catch (e: Exception) {
-                                    navController.navigate(Error)
-                                }
+                                navController.navigate(DialogConnectLoading(address))
                             },
                             onServerSocketOpenRequested = {
                                 navController.navigate(ServerSocketLoading)
@@ -206,14 +173,7 @@ class MainActivity : ComponentActivity() {
                                         withContext(Dispatchers.Main) {
                                             when (state) {
                                                 BluetoothState.STATE_BONDING -> {
-                                                    navController.navigate(
-                                                        Loading(
-                                                            ContextCompat.getString(
-                                                                this@MainActivity,
-                                                                R.string.request_paring_alert
-                                                            )
-                                                        )
-                                                    )
+                                                    navController.navigate(DialogPairingLoading)
                                                 }
 
                                                 BluetoothState.STATE_BONDED -> {
@@ -259,19 +219,50 @@ class MainActivity : ComponentActivity() {
                         )
 
                     }
-                    dialog<Loading> { backStackEntry ->
-                        val loading: Loading = backStackEntry.toRoute()
+                    dialog<DialogConnectLoading> {backStackEntry->
+                        val address=backStackEntry.toRoute<DialogConnectLoading>().deviceAddress
 
+                        val job=CoroutineScope(Dispatchers.Main).launch(start=CoroutineStart.LAZY) {
+                            val res = async { service.requestConnect(address) }.await()
+                            navController.popBackStack()
+                            if (res) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    ContextCompat.getString(this@MainActivity,R.string.connected),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                navController.navigate(Chat)
+                            } else {
+                                navController.navigate(Error)
+                            }
+                        }
                         LoadingDialog(
                             modifier = Modifier,
-                            onDismissRequest = { navController.popBackStack() },
-                            text = loading.text
+                            onDismissRequest = {
+                                job.cancel()
+                                navController.popBackStack()
+                            },
+                            text = stringResource(
+                                id = R.string.connecting
+                            )
+                        )
+                        job.start()
+                    }
+
+                    dialog<DialogPairingLoading> {
+                        LoadingDialog(
+                            modifier = Modifier,
+                            onDismissRequest = { },
+                            text = stringResource(
+                                id = R.string.request_paring_alert
+                            )
                         )
                     }
+
                     dialog<DisconnectAlertDialog> {
                         DisconnectAlertDialog(
                             onConfirmed = {
-                                val res = service.cancelConnect()
+                                val res = service.finishConnect()
                                 if (res) {
                                     navController.popBackStack<Chat>(inclusive = true)
                                     Toast.makeText(

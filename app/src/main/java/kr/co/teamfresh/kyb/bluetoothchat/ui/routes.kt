@@ -18,7 +18,10 @@ object Discovery
 object ServerSocketLoading
 
 @Serializable
-data class Loading(val text:String)
+data class DialogConnectLoading(val deviceAddress: String)
+
+@Serializable
+object DialogPairingLoading
 
 @Serializable
 object DisconnectAlertDialog

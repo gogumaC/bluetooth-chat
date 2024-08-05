@@ -75,6 +75,8 @@ class BluetoothService(
 
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
+    private var connectJob: Job? = null
+    private var acceptJob: Job? = null
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -210,12 +212,9 @@ class BluetoothService(
 
     suspend fun openServerSocket() = withContext(Dispatchers.IO) {
 
-        if (serverSocket != null) {
-            serverSocket?.close()
-        }
-        if (connectSocket != null) {
-            connectSocket?.close()
-        }
+        serverSocket?.close()
+        connectSocket?.close()
+
         try {
             serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME, myUUID)
             Log.d(TAG, "open ServerSocket : $serverSocket")
@@ -309,7 +308,7 @@ class BluetoothService(
         }
     }
 
-    fun cancelConnect(): Boolean {
+    fun finishConnect(): Boolean {
         try {
             _connectedDevice.value = null
             _state.value = BluetoothState.STATE_NONE
@@ -330,5 +329,6 @@ class BluetoothService(
 
         }
     }
+
 
 }
