@@ -171,7 +171,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<Chat> {
-                        ChatScreen(modifier = Modifier.fillMaxSize(), viewModel = chatScreenViewModel)
+                        ChatScreen(modifier = Modifier.fillMaxSize(), viewModel = chatScreenViewModel, onBackPressed = {
+                            Toast.makeText(this@MainActivity,"back",Toast.LENGTH_SHORT).show()
+                        })
                     }
                     dialog<Error> {
                         ErrorDialog {

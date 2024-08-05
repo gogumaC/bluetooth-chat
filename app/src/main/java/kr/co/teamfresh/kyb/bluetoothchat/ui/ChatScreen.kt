@@ -1,5 +1,6 @@
 package kr.co.teamfresh.kyb.bluetoothchat.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -43,6 +44,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -59,12 +62,17 @@ import kr.co.teamfresh.kyb.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
 @Composable
 fun ChatScreen(
+    onBackPressed:()->Unit,
     modifier: Modifier = Modifier,
     viewModel: ChatScreenViewModel =ChatScreenViewModel()
 ) {
     val text by viewModel.text.collectAsState()
     val messageList by viewModel.messageList.collectAsState()
     val connectedDevice by viewModel.connectedDevice.collectAsState()
+    val backHandlerEnabled by remember{ mutableStateOf(connectedDevice!==null) }
+    BackHandler(backHandlerEnabled) {
+        onBackPressed()
+    }
 
     Surface(
         modifier = modifier
@@ -312,6 +320,6 @@ fun ChatInput(
 @Composable
 fun ChatScreenPreview() {
     BluetoothChatTheme {
-        ChatScreen(Modifier.fillMaxSize())
+        ChatScreen(modifier=Modifier.fillMaxSize(),onBackPressed = {})
     }
 }
