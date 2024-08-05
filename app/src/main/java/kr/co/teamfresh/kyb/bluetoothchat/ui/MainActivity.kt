@@ -30,8 +30,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
+import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothState
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_READ
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_TOAST
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.MESSAGE_WRITE
@@ -116,21 +118,18 @@ class MainActivity : ComponentActivity() {
 
         val service = BluetoothService( bluetoothAdapter!!, this)
 
-        service.getPairedDeviceList()
-
-
         setContent {
             val navController = rememberNavController()
             val discoveredDevice = service.discoveredDevices.collectAsState()
             val bluetoothState = service.state.collectAsState()
-            val savedBluetoothDevices = service.getPairedDeviceList()
+            val savedBluetoothDevices = service.pairedDeviceList.collectAsState()
             val chatScreenViewModel=ChatScreenViewModel(service)
             BluetoothChatTheme {
                 NavHost(navController = navController, startDestination = Connect) {
                     composable<Connect> {
                         ConnectScreen(
                             modifier = Modifier.fillMaxSize(),
-                            deviceList = savedBluetoothDevices,
+                            deviceList = savedBluetoothDevices.value,
                             onBluetoothDeviceScanRequest = {
                                 navController.navigate(Discovery)
                                 service.startDiscovering(this@MainActivity)
@@ -188,13 +187,24 @@ class MainActivity : ComponentActivity() {
                             deviceList = discoveredDevice.value.toList(),
                             bluetoothDiscoveringState = bluetoothState.value,
                             onSelectDevice = {
-                                CoroutineScope(Dispatchers.Main).launch{
-                                    val res=async { service.requestConnect(it.address)}.await()
-                                    navController.popBackStack()
-                                    if(res){
-                                        navController.navigate(Chat)
-                                    }else {
-                                        navController.navigate(Error)
+                                CoroutineScope(Dispatchers.IO).launch{
+                                    service.requestPairing(it.address).collect{state->
+                                        withContext(Dispatchers.Main){
+                                            when(state){
+                                                BluetoothState.STATE_BONDING->{
+                                                    navController.navigate(Loading(ContextCompat.getString(this@MainActivity,R.string.request_paring_alert)))
+                                                }
+                                                BluetoothState.STATE_BONDED->{
+                                                    Toast.makeText(this@MainActivity,ContextCompat.getString(this@MainActivity,R.string.complete_pairing),Toast.LENGTH_SHORT).show()
+                                                    navController.popBackStack<Connect>(inclusive = false)
+                                                }
+                                                BluetoothState.STATE_NONE->{
+                                                    navController.popBackStack()
+                                                    navController.navigate(Error)
+                                                }
+                                                else->{}
+                                            }
+                                        }
                                     }
                                 }
                             },

@@ -13,6 +13,7 @@ import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -20,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +46,9 @@ class BluetoothService(
     private val _state = MutableStateFlow(BluetoothState.STATE_NONE)
     val state: StateFlow<BluetoothState> = _state
 
+    private val _pairingState = MutableStateFlow(BluetoothState.STATE_NONE)
+    val pairingState: StateFlow<BluetoothState> = _pairingState
+
     private val myUUID =
         UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     private val NAME = "BluetoothChat"
@@ -54,12 +59,16 @@ class BluetoothService(
         addAction(BluetoothDevice.ACTION_FOUND)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
     }
 
     private var serverSocket: BluetoothServerSocket? = null
     private var connectSocket: BluetoothSocket? = null
     private val _connectedDevice: MutableStateFlow<BluetoothDevice?> = MutableStateFlow(null)
     val connectedDevice: StateFlow<BluetoothDevice?> = _connectedDevice
+
+    private val _pairedDeviceList=MutableStateFlow(bluetoothAdapter.bondedDevices.toList())
+    val pairedDeviceList:StateFlow<List<BluetoothDevice>> = _pairedDeviceList
 
     private val _messageFlow = MutableStateFlow("")
     val messageFlow: StateFlow<String> = _messageFlow.asStateFlow()
@@ -94,11 +103,39 @@ class BluetoothService(
                     _state.value = BluetoothState.STATE_DISCOVERING_FINISHED
 
                 }
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED->{
+                    val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
+                        BluetoothDevice.EXTRA_DEVICE,
+                        BluetoothDevice::class.java
+                    ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    Log.d(TAG, "pairedDevice : ${device?.name} ${device?.address}")
+
+                    val bondState=p1.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE,BluetoothDevice.ERROR)
+
+                    when(bondState){
+                        BluetoothDevice.BOND_NONE->{
+                            Log.d(TAG, "none")
+                            _pairingState.value=BluetoothState.STATE_NONE
+                        }
+                        BluetoothDevice.BOND_BONDING-> {
+                            Log.d(TAG, "bonding")
+                            _pairingState.value=BluetoothState.STATE_BONDING
+                        }
+                        BluetoothDevice.BOND_BONDED-> {
+                            Log.d(TAG, "bonded")
+                            _pairingState.value=BluetoothState.STATE_BONDED
+                            device?.let {
+                                _pairedDeviceList.value=pairedDeviceList.value+device
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    private val bluetoothScanLauncher = activity?.registerForActivityResult(ActivityResultContracts.StartActivityForResult()){}
+
+    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
 
     init {
         activity?.lifecycle?.addObserver(this)
@@ -122,7 +159,10 @@ class BluetoothService(
     }
 
     override fun onCreate(owner: LifecycleOwner) {
-        activity?.registerReceiver(receiver, filter)
+        activity?.let{
+            it.registerReceiver(receiver, filter)
+            bluetoothScanLauncher = it.registerForActivityResult(ActivityResultContracts.StartActivityForResult()){}
+        }
         super.onCreate(owner)
     }
 
@@ -136,7 +176,7 @@ class BluetoothService(
         val discoverableIntent: Intent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
             putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
         }
-        bluetoothScanLauncher?.launch(discoverableIntent)
+        bluetoothScanLauncher.launch(discoverableIntent)
     }
 
     fun startDiscovering(activity: Activity) {
@@ -153,6 +193,14 @@ class BluetoothService(
             activity.registerReceiver(receiver, filter)
         }
     }
+
+    fun requestPairing(address: String): Flow<BluetoothState> {
+        val device=bluetoothAdapter.getRemoteDevice(address)
+        device.createBond()
+        _pairingState.value=BluetoothState.STATE_START_BOND
+        return pairingState
+    }
+
 
     suspend fun openServerSocket() = withContext(Dispatchers.IO) {
 
@@ -273,10 +321,6 @@ class BluetoothService(
             }
 
         }
-    }
-
-    fun getPairedDeviceList(): List<BluetoothDevice> {
-        return bluetoothAdapter.bondedDevices.toList()
     }
 
 }
