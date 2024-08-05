@@ -17,6 +17,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +62,9 @@ class BluetoothService(
 
     private val _messageFlow = MutableStateFlow("")
     val messageFlow: StateFlow<String> = _messageFlow.asStateFlow()
+
+    private val connectingScope=CoroutineScope(Job()+Dispatchers.IO)
+    private val connectingDeviceJobMap= mutableMapOf<String,Job>()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -120,6 +125,7 @@ class BluetoothService(
 
     override fun onDestroy(owner: LifecycleOwner) {
         activity?.unregisterReceiver(receiver)
+        connectingScope.cancel()
         super.onDestroy(owner)
     }
 
@@ -187,7 +193,12 @@ class BluetoothService(
             _connectedDevice.value = connectSocket?.remoteDevice
             Log.d(TAG, "connect success.\n connected with $device")
             _state.value = BluetoothState.STATE_CONNECTED
-            listenMessage(connectSocket!!)
+
+            if(address in connectingDeviceJobMap){
+                connectingDeviceJobMap[address]?.cancel()
+            }
+            connectingDeviceJobMap[address]=connectingScope.launch { listenMessage(connectSocket!!) }
+
         } catch (e: IOException) {
             Log.e(TAG, "connect fail : $e")
             return@withContext false
