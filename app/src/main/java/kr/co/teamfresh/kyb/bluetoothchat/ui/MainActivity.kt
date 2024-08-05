@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.bluetooth.BluetoothService
@@ -139,7 +140,16 @@ class MainActivity : ComponentActivity() {
                             onDeviceConnectRequest = { address ->
                                 try {
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        service.requestConnect(address)
+                                        val j=async { service.requestConnect(address) }
+                                        navController.navigate(Loading(ContextCompat.getString(this@MainActivity,R.string.connecting)))
+                                        val res=j.await()
+                                        navController.popBackStack()
+                                        if(res){
+                                            Toast.makeText(this@MainActivity,"연결되었습니다.",Toast.LENGTH_SHORT).show()
+                                        }else{
+                                            navController.navigate(Error)
+                                        }
+
                                     }
 
                                 } catch (e: Exception) {

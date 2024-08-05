@@ -118,7 +118,7 @@ fun DeviceInfo(
     backgroundColor: Color,
     modifier: Modifier = Modifier
 ) {
-    val appendText = stringResource(id = R.string.connecting)
+    val appendText = stringResource(id = R.string.connecting_with)
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
             append(deviceName)

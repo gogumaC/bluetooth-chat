@@ -190,7 +190,9 @@ class BluetoothService(
             listenMessage(connectSocket!!)
         } catch (e: IOException) {
             Log.e(TAG, "connect fail : $e")
+            return@withContext false
         }
+        return@withContext true
     }
 
     private suspend fun listenMessage(connectSocket: BluetoothSocket) =

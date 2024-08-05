@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">BluetoothChat</string>
-    <string name="connecting"> 와 연결중</string>
+    <string name="connecting_with"> 와 연결중</string>
+    <string name="connecting">연결중</string>
+    <string name="connected">연결</string>
     <string name="permission_required">해당 작업을 시작하기 위해서는 블루투스 권한이 필요합니다.</string>
     <string name="go_to_chat">채팅 화면으로 이동</string>
     <string name="error_occurred">에러가 발생했습니다.</string>
@@ -9,5 +11,6 @@
     <string name="open_server_socket">서버소켓 열기</string>
     <string name="server_socket_loading">서버 소켓을 열었습니다.\n 연결을 대기중입니다.</string>
     <string name="close_serever_socket_noti">서버 소켓을 닫았습니다.</string>
+
 
 </resources>
