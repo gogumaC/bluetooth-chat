@@ -163,11 +163,18 @@ class BluetoothService(
                 _connectedDevice.value = it.remoteDevice
                 _state.value = BluetoothState.STATE_CONNECTED
                 Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
-                listenMessage(it)
+                val device=it.remoteDevice
+                if(device.address in connectingDeviceJobMap){
+                    connectingDeviceJobMap[device.address]?.cancel()
+                }
+                connectingDeviceJobMap[device.address]=connectingScope.launch {listenMessage(it)}
+
             }
         } catch (e: IOException) {
             Log.e(TAG, "open ServerSocket fail : $e")
+            return@withContext false
         }
+        return@withContext true
     }
 
     fun closeServerSocket() {

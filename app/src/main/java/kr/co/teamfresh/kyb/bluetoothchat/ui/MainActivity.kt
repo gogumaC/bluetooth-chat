@@ -159,7 +159,13 @@ class MainActivity : ComponentActivity() {
                             onServerSocketOpenRequested = {
                                 navController.navigate(ServerSocketLoading)
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    service.openServerSocket()
+                                    val res=async { service.openServerSocket() }.await()
+                                    navController.popBackStack()
+                                    if(res){
+                                        navController.navigate(Chat)
+                                    }else{
+                                        navController.navigate(Error)
+                                    }
                                 }
                             }
                         )
