@@ -140,12 +140,12 @@ class MainActivity : ComponentActivity() {
                             onDeviceConnectRequest = { address ->
                                 try {
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        val j=async { service.requestConnect(address) }
                                         navController.navigate(Loading(ContextCompat.getString(this@MainActivity,R.string.connecting)))
-                                        val res=j.await()
+                                        val res=async { service.requestConnect(address) }.await()
                                         navController.popBackStack()
                                         if(res){
                                             Toast.makeText(this@MainActivity,"연결되었습니다.",Toast.LENGTH_SHORT).show()
+                                            navController.navigate(Chat)
                                         }else{
                                             navController.navigate(Error)
                                         }
