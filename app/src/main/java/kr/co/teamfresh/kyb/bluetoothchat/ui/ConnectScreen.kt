@@ -76,8 +76,7 @@ fun ConnectScreen(
                     SwipeDeviceItem(
                         name = name,
                         macAddress = address,
-                        requestConnectDevice = { onDeviceConnectRequest(address) },
-                        requestDeleteDevice = {})
+                        requestConnectDevice = { onDeviceConnectRequest(address) })
                 }
                 item {
                     TextButton(onClick = { onBluetoothDeviceScanRequest() }) {
@@ -122,48 +121,34 @@ fun SwipeDeviceItem(
     modifier: Modifier = Modifier,
     name: String?,
     macAddress: String,
-    requestDeleteDevice: () -> Unit,
     requestConnectDevice: () -> Unit
 ) {
     val swipeState =
         rememberSwipeToDismissBoxState(positionalThreshold = { it * 0.2f }, confirmValueChange = {
-            when (it) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    requestDeleteDevice()
-                    false
-                }
 
-                SwipeToDismissBoxValue.EndToStart -> {
-                    requestConnectDevice()
-                    false
-                }
-
-                else -> true
+            if(it==SwipeToDismissBoxValue.EndToStart){
+                requestConnectDevice()
             }
+            false
         })
     val scale by animateFloatAsState(
         targetValue = if (swipeState.targetValue == SwipeToDismissBoxValue.Settled) 1f else 1.25f,
         label = ""
     )
-    SwipeToDismissBox(modifier = modifier, state = swipeState, backgroundContent = {
-        val color =
-            if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) Color.Red else Color.Blue
+    SwipeToDismissBox(modifier = modifier, state = swipeState, enableDismissFromStartToEnd = false, backgroundContent = {
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = RoundedCornerShape(8.dp),
-            color = color
+            color = Color.Blue
         ) {
-            val alignment =
-                if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-            val icon =
-                if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) Icons.Default.Delete else Icons.Default.MailOutline
+
             Box(
-                contentAlignment = alignment, modifier = Modifier
+                contentAlignment = Alignment.CenterEnd, modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp)
             ) {
                 Icon(
-                    imageVector = icon,
+                    imageVector = Icons.Default.MailOutline,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.scale(scale)
