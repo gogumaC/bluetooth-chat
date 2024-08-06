@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kr.co.teamfresh.kyb.bluetoothchat.R
 import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.BluetoothChatTheme
+import kr.co.teamfresh.kyb.bluetoothchat.ui.theme.ConnectBackground
 
 
 @SuppressLint("MissingPermission")
@@ -56,6 +58,7 @@ fun ConnectScreen(
     deviceList: List<BluetoothDevice>,
     onBluetoothDeviceScanRequest: () -> Unit,
     onDeviceConnectRequest: (String) -> Unit,
+    onSetDiscoverableRequest: () -> Unit,
     onChatScreenNavigateRequested: () -> Unit,
     onServerSocketOpenRequested: () -> Unit
 ) {
@@ -74,8 +77,7 @@ fun ConnectScreen(
                     SwipeDeviceItem(
                         name = name,
                         macAddress = address,
-                        requestConnectDevice = { onDeviceConnectRequest(address) },
-                        requestDeleteDevice = {})
+                        requestConnectDevice = { onDeviceConnectRequest(address) })
                 }
                 item {
                     TextButton(onClick = { onBluetoothDeviceScanRequest() }) {
@@ -85,6 +87,19 @@ fun ConnectScreen(
             }
         }
         Row(modifier = Modifier.height(64.dp)) {
+            Button(
+                onClick = onSetDiscoverableRequest,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.set_discoverable),
+                    style = TextStyle(fontSize = 14.sp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.size(8.dp))
             Button(
                 onClick = onServerSocketOpenRequested,
                 modifier = Modifier
@@ -97,20 +112,6 @@ fun ConnectScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = onChatScreenNavigateRequested, modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
-                Text(
-                    text = stringResource(id = R.string.go_to_chat),
-                    style = TextStyle(fontSize = 14.sp),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                )
-            }
         }
     }
 }
@@ -121,55 +122,45 @@ fun SwipeDeviceItem(
     modifier: Modifier = Modifier,
     name: String?,
     macAddress: String,
-    requestDeleteDevice: () -> Unit,
     requestConnectDevice: () -> Unit
 ) {
     val swipeState =
         rememberSwipeToDismissBoxState(positionalThreshold = { it * 0.2f }, confirmValueChange = {
-            when (it) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    requestDeleteDevice()
-                    false
-                }
 
-                SwipeToDismissBoxValue.EndToStart -> {
-                    requestConnectDevice()
-                    false
-                }
-
-                else -> true
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                requestConnectDevice()
             }
+            false
         })
     val scale by animateFloatAsState(
         targetValue = if (swipeState.targetValue == SwipeToDismissBoxValue.Settled) 1f else 1.25f,
         label = ""
     )
-    SwipeToDismissBox(modifier = modifier, state = swipeState, backgroundContent = {
-        val color =
-            if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) Color.Red else Color.Blue
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            shape = RoundedCornerShape(8.dp),
-            color = color
-        ) {
-            val alignment =
-                if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
-            val icon =
-                if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) Icons.Default.Delete else Icons.Default.MailOutline
-            Box(
-                contentAlignment = alignment, modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
+    SwipeToDismissBox(
+        modifier = modifier,
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(8.dp),
+                color = ConnectBackground
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.scale(scale)
-                )
+
+                Box(
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MailOutline,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.scale(scale)
+                    )
+                }
             }
-        }
-    }) {
+        }) {
         BluetoothDeviceItem(name = name, macAddress = macAddress)
     }
 }
@@ -190,24 +181,20 @@ fun BluetoothDeviceItem(
         shape = RoundedCornerShape(8.dp),
         color = Color.White
     ) {
-        Row(
+        Column(
             modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = name ?: "no name",
-                modifier = Modifier.weight(0.6f),
+                modifier = Modifier,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1
             )
-            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = "mac : $macAddress",
                 style = TextStyle(color = Color.Gray, fontSize = 12.sp),
                 modifier = Modifier
-                    .align(Alignment.Top)
-                    .weight(0.4f)
             )
         }
     }
@@ -223,7 +210,8 @@ fun ConnectScreenPreview() {
             onBluetoothDeviceScanRequest = {},
             onDeviceConnectRequest = {},
             onChatScreenNavigateRequested = {},
-            onServerSocketOpenRequested = {})
+            onServerSocketOpenRequested = {},
+            onSetDiscoverableRequest = {})
     }
 }
 

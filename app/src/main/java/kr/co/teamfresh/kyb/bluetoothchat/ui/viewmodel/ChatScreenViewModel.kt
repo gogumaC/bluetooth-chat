@@ -43,6 +43,7 @@ class ChatScreenViewModel(private val bluetoothService: BluetoothService? = null
     }
 
     fun sendMessage() {
+        if(_text.value.isEmpty()) return
         viewModelScope.launch {
             bluetoothService?.sendMessage(_text.value.toByteArray())
 
