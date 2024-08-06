@@ -11,9 +11,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -86,7 +88,7 @@ class MainActivity : ComponentActivity() {
         requestBluetoothConnectPermission()
 
         val service = BluetoothService(bluetoothAdapter!!, this)
-
+        enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
             val discoveredDevice = service.discoveredDevices.collectAsState()
@@ -99,7 +101,7 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(LocalContext.current, R.string.disconnected, Toast.LENGTH_SHORT).show()
             }
             BluetoothChatTheme {
-                NavHost(navController = navController, startDestination = Connect) {
+                NavHost(navController = navController, startDestination = Connect,modifier=Modifier.safeDrawingPadding()) {
                     composable<Connect> {
                         ConnectScreen(
                             modifier = Modifier.fillMaxSize(),
