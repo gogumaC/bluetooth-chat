@@ -59,6 +59,7 @@ class BluetoothService(
         addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
         addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
         addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
     }
 
     private var serverSocket: BluetoothServerSocket? = null
@@ -74,8 +75,6 @@ class BluetoothService(
 
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
-    private var connectJob: Job? = null
-    private var acceptJob: Job? = null
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -133,6 +132,16 @@ class BluetoothService(
                                 _pairedDeviceList.value = pairedDeviceList.value + device
                             }
                         }
+                    }
+                }
+
+                BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+                    val device = if (Build.VERSION.SDK_INT >= 33) p1.getParcelableExtra(
+                        BluetoothDevice.EXTRA_DEVICE,
+                        BluetoothDevice::class.java
+                    ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    if(device?.address==connectedDevice.value?.address){
+                        finishConnect()
                     }
                 }
             }
@@ -309,9 +318,15 @@ class BluetoothService(
 
     fun finishConnect(): Boolean {
         try {
+            connectedDevice.value?.address?.let{
+                if(it in connectingDeviceJobMap){
+                    connectingDeviceJobMap[it]?.cancel()
+                }
+            }
             _connectedDevice.value = null
-            _state.value = BluetoothState.STATE_NONE
+            _state.value = BluetoothState.STATE_CLOSE_CONNECT
             connectSocket?.close()
+
         } catch (e: IOException) {
             Log.e(TAG, "Could not close the connect socket", e)
             return false

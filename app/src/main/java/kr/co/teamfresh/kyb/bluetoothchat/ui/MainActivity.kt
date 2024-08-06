@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
@@ -55,25 +56,6 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val mHandler = object : Handler(Looper.getMainLooper()) {
-            override fun handleMessage(msg: Message) {
-                when (msg.what) {
-                    MESSAGE_READ -> {
-                        val readBuf = msg.obj as ByteArray
-                    }
-
-                    MESSAGE_WRITE -> {
-                        Toast.makeText(this@MainActivity, "Success send data", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-
-                    MESSAGE_TOAST -> {
-                        Toast.makeText(this@MainActivity, "ERROR", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
 
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
         val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
@@ -117,6 +99,11 @@ class MainActivity : ComponentActivity() {
             val bluetoothState = service.state.collectAsState()
             val savedBluetoothDevices = service.pairedDeviceList.collectAsState()
             val chatScreenViewModel = ChatScreenViewModel(service)
+
+            if(bluetoothState.value==BluetoothState.STATE_CLOSE_CONNECT){
+                navController.popBackStack<Connect>(inclusive = false)
+                Toast.makeText(LocalContext.current, R.string.disconnected, Toast.LENGTH_SHORT).show()
+            }
             BluetoothChatTheme {
                 NavHost(navController = navController, startDestination = Connect) {
                     composable<Connect> {
@@ -264,7 +251,7 @@ class MainActivity : ComponentActivity() {
                             onConfirmed = {
                                 val res = service.finishConnect()
                                 if (res) {
-                                    navController.popBackStack<Chat>(inclusive = true)
+                                    //navController.popBackStack<Chat>(inclusive = true)
                                     Toast.makeText(
                                         this@MainActivity,
                                         ContextCompat.getString(
