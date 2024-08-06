@@ -127,7 +127,7 @@ fun SwipeDeviceItem(
     val swipeState =
         rememberSwipeToDismissBoxState(positionalThreshold = { it * 0.2f }, confirmValueChange = {
 
-            if(it==SwipeToDismissBoxValue.EndToStart){
+            if (it == SwipeToDismissBoxValue.EndToStart) {
                 requestConnectDevice()
             }
             false
@@ -136,27 +136,31 @@ fun SwipeDeviceItem(
         targetValue = if (swipeState.targetValue == SwipeToDismissBoxValue.Settled) 1f else 1.25f,
         label = ""
     )
-    SwipeToDismissBox(modifier = modifier, state = swipeState, enableDismissFromStartToEnd = false, backgroundContent = {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            shape = RoundedCornerShape(8.dp),
-            color = ConnectBackground
-        ) {
-
-            Box(
-                contentAlignment = Alignment.CenterEnd, modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
+    SwipeToDismissBox(
+        modifier = modifier,
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(8.dp),
+                color = ConnectBackground
             ) {
-                Icon(
-                    imageVector = Icons.Default.MailOutline,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.scale(scale)
-                )
+
+                Box(
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MailOutline,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.scale(scale)
+                    )
+                }
             }
-        }
-    }) {
+        }) {
         BluetoothDeviceItem(name = name, macAddress = macAddress)
     }
 }
@@ -177,24 +181,20 @@ fun BluetoothDeviceItem(
         shape = RoundedCornerShape(8.dp),
         color = Color.White
     ) {
-        Row(
+        Column(
             modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = name ?: "no name",
-                modifier = Modifier.weight(0.6f),
+                modifier = Modifier,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1
             )
-            Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = "mac : $macAddress",
                 style = TextStyle(color = Color.Gray, fontSize = 12.sp),
                 modifier = Modifier
-                    .align(Alignment.Top)
-                    .weight(0.4f)
             )
         }
     }
