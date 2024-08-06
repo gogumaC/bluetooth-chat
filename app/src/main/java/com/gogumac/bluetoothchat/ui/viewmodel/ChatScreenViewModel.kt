@@ -52,7 +52,7 @@ class ChatScreenViewModel(private val bluetoothService: BluetoothService? = null
     }
 
     private suspend fun listenMessage() = withContext(Dispatchers.IO) {
-        bluetoothService?.messageFlow?.drop(1)?.collect { msg ->
+        bluetoothService?.messageFlow?.collect { msg ->
             if (msg.isNotEmpty()) _messageList.value += Message(
                 text = msg,
                 device = connectedDevice.value,
@@ -61,6 +61,4 @@ class ChatScreenViewModel(private val bluetoothService: BluetoothService? = null
         }
     }
 
-    fun connectDevice(deviceName: String) {}
-    fun disconnectDevice() {}
 }

@@ -22,8 +22,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -70,8 +73,8 @@ class BluetoothService(
     private val _pairedDeviceList = MutableStateFlow(bluetoothAdapter.bondedDevices.toList())
     val pairedDeviceList: StateFlow<List<BluetoothDevice>> = _pairedDeviceList
 
-    private val _messageFlow = MutableStateFlow("")
-    val messageFlow: StateFlow<String> = _messageFlow.asStateFlow()
+    private val _messageFlow = MutableSharedFlow<String>(1)
+    val messageFlow: SharedFlow<String> = _messageFlow.asSharedFlow()
 
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
@@ -301,7 +304,7 @@ class BluetoothService(
                 }
 
                 if (numBytes > 0) {
-                    _messageFlow.value = String(buffer, 0, numBytes)
+                    _messageFlow.emit(String(buffer, 0, numBytes))
                     Log.d(TAG, "listenMessage : $buffer")
                 }
             }

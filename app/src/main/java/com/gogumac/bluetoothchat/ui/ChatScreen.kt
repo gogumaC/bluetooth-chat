@@ -189,7 +189,7 @@ fun Talk(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start,
     ) {
         if (isMine) {
             TalkUnit(content, defaultSize = defaultSize)
@@ -254,12 +254,17 @@ fun DeviceBadge(
 
 @Composable
 fun TalkUnit(text: String, modifier: Modifier = Modifier, defaultSize: Dp = 48.dp) {
-    Card(modifier = modifier.heightIn(min = defaultSize), shape = RoundedCornerShape(8.dp)) {
-        Text(
-            modifier = Modifier
-                .padding(10.dp)
-                .widthIn(max = 250.dp), text = text
-        )
+    Card(
+        modifier=modifier.padding(top=4.dp),
+        shape = RoundedCornerShape(8.dp)) {
+        Box(contentAlignment = Alignment.Center,modifier=Modifier){
+            Text(
+                modifier = Modifier
+                    .padding(10.dp)
+                    .widthIn(max = 250.dp), text = text
+            )
+        }
+
     }
 }
 
