@@ -9,11 +9,11 @@ plugins {
 
 
 android {
-    namespace = "kr.co.teamfresh.kyb.bluetoothchat"
+    namespace = "com.gogumac.bluetoothchat"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "kr.co.teamfresh.kyb.bluetoothchat"
+        applicationId = "com.gogumac.bluetoothchat"
         minSdk = 28
         targetSdk = 33
         versionCode = 1
