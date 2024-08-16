@@ -20,6 +20,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -162,17 +163,20 @@ class BluetoothService(
         }
     }
 
-
-    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
+    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<IntentSenderRequest>
     private val pairingRequest: AssociationRequest =
         AssociationRequest.Builder().addDeviceFilter(deviceFilter).build()
     private var deviceManager: CompanionDeviceManager =
         activity?.getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
+
     private val discoveringCallback: CompanionDeviceManager.Callback =
         object : CompanionDeviceManager.Callback() {
             override fun onAssociationPending(intentSender: IntentSender) {
                 super.onAssociationPending(intentSender)
-                Log.d(TAG, "associate pendin")
+                if(Build.VERSION.SDK_INT>=33){
+                    val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+                    bluetoothScanLauncher.launch(intentSenderRequest)
+                }
             }
 
             override fun onFailure(p0: CharSequence?) {
@@ -182,14 +186,14 @@ class BluetoothService(
 
             override fun onDeviceFound(intentSender: IntentSender) {
                 super.onDeviceFound(intentSender)
-                Log.d(TAG, "onDeviceFound")
+                if(Build.VERSION.SDK_INT<33){
+                    val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+                    bluetoothScanLauncher.launch(intentSenderRequest)
+                }
             }
         }
 
-
     init {
-
-
         activity?.lifecycle?.addObserver(this)
         //블루투스가 활성화 되어있는지 확인
         if (!bluetoothAdapter.isEnabled) {
@@ -214,7 +218,7 @@ class BluetoothService(
         activity?.let {
             it.registerReceiver(receiver, filter)
             bluetoothScanLauncher =
-                it.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+                it.registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
         }
         super.onCreate(owner)
     }
@@ -230,7 +234,7 @@ class BluetoothService(
             Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
                 putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
             }
-        bluetoothScanLauncher.launch(discoverableIntent)
+//        bluetoothScanLauncher.launch(discoverableIntent)
     }
 
     fun startDiscovering(activity: Activity) {
