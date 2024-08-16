@@ -6,11 +6,13 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.companion.BluetoothDeviceFilter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.os.ParcelUuid
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -79,6 +81,10 @@ class BluetoothService(
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
 
+    val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().addServiceUuid(
+        ParcelUuid(myUUID), null
+    ).build()
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
             val action = p1?.action
@@ -143,7 +149,7 @@ class BluetoothService(
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
                     ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    if(device?.address==connectedDevice.value?.address){
+                    if (device?.address == connectedDevice.value?.address) {
                         finishConnect()
                     }
                 }
@@ -321,8 +327,8 @@ class BluetoothService(
 
     fun finishConnect(): Boolean {
         try {
-            connectedDevice.value?.address?.let{
-                if(it in connectingDeviceJobMap){
+            connectedDevice.value?.address?.let {
+                if (it in connectingDeviceJobMap) {
                     connectingDeviceJobMap[it]?.cancel()
                 }
             }
