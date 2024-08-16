@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.companion.AssociationRequest
 import android.companion.BluetoothDeviceFilter
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -159,8 +160,10 @@ class BluetoothService(
 
 
     private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
+    private val pairingRequest: AssociationRequest= AssociationRequest.Builder().addDeviceFilter(deviceFilter).build()
 
     init {
+
         activity?.lifecycle?.addObserver(this)
         //블루투스가 활성화 되어있는지 확인
         if (!bluetoothAdapter.isEnabled) {
