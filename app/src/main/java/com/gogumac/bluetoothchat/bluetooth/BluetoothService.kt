@@ -8,13 +8,16 @@ import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.companion.AssociationRequest
 import android.companion.BluetoothDeviceFilter
+import android.companion.CompanionDeviceManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.IntentSender
 import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.Executor
 
 
 private const val TAG = "BLUETOOTH_DEBUG_TAG"
@@ -160,9 +164,30 @@ class BluetoothService(
 
 
     private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
-    private val pairingRequest: AssociationRequest= AssociationRequest.Builder().addDeviceFilter(deviceFilter).build()
+    private val pairingRequest: AssociationRequest =
+        AssociationRequest.Builder().addDeviceFilter(deviceFilter).build()
+    private var deviceManager: CompanionDeviceManager =
+        activity?.getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
+    private val discoveringCallback: CompanionDeviceManager.Callback =
+        object : CompanionDeviceManager.Callback() {
+            override fun onAssociationPending(intentSender: IntentSender) {
+                super.onAssociationPending(intentSender)
+                Toast.makeText(activity, "associate pending", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onFailure(p0: CharSequence?) {
+                //TODO("Not yet implemented")
+            }
+
+            override fun onDeviceFound(intentSender: IntentSender) {
+                super.onDeviceFound(intentSender)
+                Toast.makeText(activity, "device found", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
     init {
+
 
         activity?.lifecycle?.addObserver(this)
         //블루투스가 활성화 되어있는지 확인
@@ -215,8 +240,15 @@ class BluetoothService(
 
         if (!bluetoothAdapter.isDiscovering) {
             _state.value = BluetoothState.STATE_DISCOVERING
-            val res = bluetoothAdapter.startDiscovery()
-            Log.d("checkfor", "start res: $res")
+            val executor: Executor = Executor { it.run() }
+            if(Build.VERSION.SDK_INT>=33){
+                deviceManager.associate(pairingRequest, executor, discoveringCallback)
+            }else{
+                deviceManager.associate(pairingRequest,discoveringCallback,null)
+            }
+
+            //val res = bluetoothAdapter.startDiscovery()
+            //Log.d("checkfor", "start res: $res")
 
             activity.registerReceiver(receiver, filter)
         }
