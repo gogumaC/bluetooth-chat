@@ -172,16 +172,17 @@ class BluetoothService(
         object : CompanionDeviceManager.Callback() {
             override fun onAssociationPending(intentSender: IntentSender) {
                 super.onAssociationPending(intentSender)
-                Toast.makeText(activity, "associate pending", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "associate pendin")
             }
 
             override fun onFailure(p0: CharSequence?) {
                 //TODO("Not yet implemented")
+                Log.d(TAG,"associate fail")
             }
 
             override fun onDeviceFound(intentSender: IntentSender) {
                 super.onDeviceFound(intentSender)
-                Toast.makeText(activity, "device found", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "onDeviceFound")
             }
         }
 
