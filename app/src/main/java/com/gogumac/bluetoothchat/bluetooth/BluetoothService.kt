@@ -87,7 +87,7 @@ class BluetoothService(
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
 
-    val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().addServiceUuid(
+    private val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().addServiceUuid(
         ParcelUuid(myUUID), null
     ).build()
 
@@ -218,7 +218,19 @@ class BluetoothService(
         activity?.let {
             it.registerReceiver(receiver, filter)
             bluetoothScanLauncher =
-                it.registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
+                it.registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {result->
+                    Log.d(TAG,"bluetoothScan finish")
+                    if(result.resultCode==Activity.RESULT_OK){
+                        val device = if (Build.VERSION.SDK_INT >= 33) result.data?.getParcelableExtra(
+                            BluetoothDevice.EXTRA_DEVICE,
+                            BluetoothDevice::class.java
+                        ) else result.data?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                        Log.d(TAG,"Request pairing device name : ${device?.name}")
+                        device?.createBond()
+                    }else{
+                        Log.d(TAG,"User cancel")
+                    }
+                }
         }
         super.onCreate(owner)
     }
