@@ -11,6 +11,7 @@
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"
         android:maxSdkVersion="28" />
+    <uses-feature android:name="android.software.companion_device_setup"/>
 
 
     <application
