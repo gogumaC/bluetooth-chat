@@ -60,7 +60,7 @@ class BluetoothService(
     private val pairingState = MutableStateFlow(BluetoothState.STATE_NONE)
 
     private val myUUID =
-        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+        ParcelUuid(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
     private val NAME = "BluetoothChat"
 
     private val _discoveredDevices = MutableStateFlow(mutableSetOf<BluetoothDevice>())
@@ -88,7 +88,7 @@ class BluetoothService(
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
 
     private val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().addServiceUuid(
-        ParcelUuid(myUUID), null
+        myUUID, null
     ).build()
 
     private val receiver = object : BroadcastReceiver() {
@@ -174,19 +174,20 @@ class BluetoothService(
             override fun onAssociationPending(intentSender: IntentSender) {
                 super.onAssociationPending(intentSender)
                 if(Build.VERSION.SDK_INT>=33){
+                    Log.d(TAG,"associate success (scan success)")
                     val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
                     bluetoothScanLauncher.launch(intentSenderRequest)
                 }
             }
 
             override fun onFailure(p0: CharSequence?) {
-                //TODO("Not yet implemented")
                 Log.d(TAG,"associate fail")
             }
 
             override fun onDeviceFound(intentSender: IntentSender) {
                 super.onDeviceFound(intentSender)
                 if(Build.VERSION.SDK_INT<33){
+                    Log.d(TAG,"associate success (scan success)")
                     val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
                     bluetoothScanLauncher.launch(intentSenderRequest)
                 }
@@ -228,7 +229,7 @@ class BluetoothService(
                         Log.d(TAG,"Request pairing device name : ${device?.name}")
                         device?.createBond()
                     }else{
-                        Log.d(TAG,"User cancel")
+                        Log.d(TAG,"scan canceled")
                     }
                 }
         }
@@ -251,7 +252,7 @@ class BluetoothService(
 
     fun startDiscovering(activity: Activity) {
         Log.d(
-            "checkfor",
+            TAG,
             "discovering state : ${bluetoothAdapter.isDiscovering} findStart!"
         )
 
@@ -263,9 +264,6 @@ class BluetoothService(
             }else{
                 deviceManager.associate(pairingRequest,discoveringCallback,null)
             }
-
-            //val res = bluetoothAdapter.startDiscovery()
-            //Log.d("checkfor", "start res: $res")
 
             activity.registerReceiver(receiver, filter)
         }
@@ -285,7 +283,7 @@ class BluetoothService(
         connectSocket?.close()
 
         try {
-            serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME, myUUID)
+            serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME, myUUID.uuid)
             Log.d(TAG, "open ServerSocket : $serverSocket")
             _state.value = BluetoothState.STATE_OPEN_SERVER_SOCKET
             connectSocket = serverSocket?.accept()
@@ -327,7 +325,7 @@ class BluetoothService(
 
         val device = bluetoothAdapter.getRemoteDevice(address)
         connectSocket =
-            device.createRfcommSocketToServiceRecord(myUUID)
+            device.createRfcommSocketToServiceRecord(myUUID.uuid)
         try {
             connectSocket?.connect()
             _connectedDevice.value = connectSocket?.remoteDevice
