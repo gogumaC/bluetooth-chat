@@ -44,10 +44,6 @@ import java.util.concurrent.Executor
 
 private const val TAG = "BLUETOOTH_DEBUG_TAG"
 
-const val MESSAGE_READ = 0
-const val MESSAGE_WRITE = 1
-const val MESSAGE_TOAST = 2
-
 @SuppressLint("MissingPermission")
 class BluetoothService(
     private val bluetoothAdapter: BluetoothAdapter,
@@ -60,7 +56,8 @@ class BluetoothService(
     private val pairingState = MutableStateFlow(BluetoothState.STATE_NONE)
 
     private val myUUID =
-        ParcelUuid(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+        ParcelUuid(UUID.fromString("5dc96d32-4d88-43c5-b096-f40d4623e985"))
+//        ParcelUuid(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
     private val NAME = "BluetoothChat"
 
     private val _discoveredDevices = MutableStateFlow(mutableSetOf<BluetoothDevice>())
@@ -87,9 +84,7 @@ class BluetoothService(
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
 
-    private val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().addServiceUuid(
-        myUUID, null
-    ).build()
+    private val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().build()//.addServiceUuid(myUUID, null).build()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
