@@ -1,5 +1,6 @@
 package com.gogumac.bluetoothchat.ui
 
+import android.bluetooth.BluetoothDevice
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -25,3 +26,6 @@ object DialogPairingLoading
 
 @Serializable
 object DisconnectAlertDialog
+
+@Serializable
+data class DialogSelectConnectAccept(val deviceName:String,val deviceAddress: String)

@@ -290,22 +290,31 @@ class BluetoothService(
 
             connectSocket?.also {
                 serverSocket?.close()
-                _connectedDevice.value = it.remoteDevice
-                _state.value = BluetoothState.STATE_CONNECTED
-                Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
-                val device = it.remoteDevice
-                if (device.address in connectingDeviceJobMap) {
-                    connectingDeviceJobMap[device.address]?.cancel()
-                }
-                connectingDeviceJobMap[device.address] =
-                    connectingScope.launch { listenMessage(it) }
-
             }
         } catch (e: IOException) {
             Log.e(TAG, "open ServerSocket fail : $e")
-            return@withContext false
+            return@withContext null
         }
-        return@withContext true
+        return@withContext connectSocket?.remoteDevice
+    }
+
+    fun acceptConnect(){
+        connectSocket?.let{
+            _connectedDevice.value = it.remoteDevice
+            _state.value = BluetoothState.STATE_CONNECTED
+            val device = it.remoteDevice
+            if (device.address in connectingDeviceJobMap) {
+                connectingDeviceJobMap[device.address]?.cancel()
+            }
+            connectingDeviceJobMap[device.address] =
+                connectingScope.launch { listenMessage(it) }
+        }
+        //Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
+
+    }
+
+    fun rejectConnect(){
+        connectSocket?.close()
     }
 
     fun closeServerSocket() {

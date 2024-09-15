@@ -39,6 +39,7 @@ import com.gogumac.bluetoothchat.ui.dialogs.ConnectableDeviceListDialog
 import com.gogumac.bluetoothchat.ui.dialogs.DisconnectAlertDialog
 import com.gogumac.bluetoothchat.ui.dialogs.ErrorDialog
 import com.gogumac.bluetoothchat.ui.dialogs.LoadingDialog
+import com.gogumac.bluetoothchat.ui.dialogs.SelectConnectAcceptDialog
 import com.gogumac.bluetoothchat.ui.theme.BluetoothChatTheme
 import com.gogumac.bluetoothchat.ui.viewmodel.ChatScreenViewModel
 
@@ -96,12 +97,17 @@ class MainActivity : ComponentActivity() {
             val savedBluetoothDevices = service.pairedDeviceList.collectAsState()
             val chatScreenViewModel = ChatScreenViewModel(service)
 
-            if(bluetoothState.value== BluetoothState.STATE_CLOSE_CONNECT){
+            if (bluetoothState.value == BluetoothState.STATE_CLOSE_CONNECT) {
                 navController.popBackStack<Connect>(inclusive = false)
-                Toast.makeText(LocalContext.current, R.string.disconnected, Toast.LENGTH_SHORT).show()
+                Toast.makeText(LocalContext.current, R.string.disconnected, Toast.LENGTH_SHORT)
+                    .show()
             }
             BluetoothChatTheme {
-                NavHost(navController = navController, startDestination = Connect,modifier=Modifier.safeDrawingPadding()) {
+                NavHost(
+                    navController = navController,
+                    startDestination = Connect,
+                    modifier = Modifier.safeDrawingPadding()
+                ) {
                     composable<Connect> {
                         ConnectScreen(
                             modifier = Modifier.fillMaxSize(),
@@ -118,10 +124,17 @@ class MainActivity : ComponentActivity() {
                             onServerSocketOpenRequested = {
                                 navController.navigate(ServerSocketLoading)
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    val res = async { service.openServerSocket() }.await()
+                                    val res = async {
+                                        service.openServerSocket()
+                                    }.await()
                                     navController.popBackStack()
-                                    if (res) {
-                                        navController.navigate(Chat)
+                                    if (res != null) {
+                                        navController.navigate(
+                                            DialogSelectConnectAccept(
+                                                res.name,
+                                                res.address
+                                            )
+                                        )
                                     } else {
                                         navController.navigate(Error)
                                     }
@@ -201,23 +214,27 @@ class MainActivity : ComponentActivity() {
                         )
 
                     }
-                    dialog<DialogConnectLoading> {backStackEntry->
-                        val address=backStackEntry.toRoute<DialogConnectLoading>().deviceAddress
+                    dialog<DialogConnectLoading> { backStackEntry ->
+                        val address = backStackEntry.toRoute<DialogConnectLoading>().deviceAddress
 
-                        val job=CoroutineScope(Dispatchers.Main).launch(start=CoroutineStart.LAZY) {
-                            val res = async { service.requestConnect(address) }.await()
-                            navController.popBackStack()
-                            if (res) {
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    ContextCompat.getString(this@MainActivity,R.string.connected),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                navController.navigate(Chat)
-                            } else {
-                                navController.navigate(Error)
+                        val job =
+                            CoroutineScope(Dispatchers.Main).launch(start = CoroutineStart.LAZY) {
+                                val res = async { service.requestConnect(address) }.await()
+                                navController.popBackStack()
+                                if (res) {
+                                    Toast.makeText(
+                                        this@MainActivity,
+                                        ContextCompat.getString(
+                                            this@MainActivity,
+                                            R.string.connected
+                                        ),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigate(Chat)
+                                } else {
+                                    navController.navigate(Error)
+                                }
                             }
-                        }
                         LoadingDialog(
                             modifier = Modifier,
                             onDismissRequest = {
@@ -246,7 +263,6 @@ class MainActivity : ComponentActivity() {
                             onConfirmed = {
                                 val res = service.finishConnect()
                                 if (res) {
-                                    //navController.popBackStack<Chat>(inclusive = true)
                                     Toast.makeText(
                                         this@MainActivity,
                                         ContextCompat.getString(
@@ -269,6 +285,34 @@ class MainActivity : ComponentActivity() {
                             onCanceled = {
                                 navController.popBackStack()
                             })
+                    }
+
+                    dialog<DialogSelectConnectAccept> { backStackEntry ->
+                        val deviceName =
+                            backStackEntry.toRoute<DialogSelectConnectAccept>().deviceName
+                        val deviceAddress =
+                            backStackEntry.toRoute<DialogSelectConnectAccept>().deviceAddress
+                        SelectConnectAcceptDialog(
+                            deviceName = deviceName,
+                            deviceAddress = deviceAddress,
+                            onConfirmed = {
+                                navController.popBackStack()
+                                service.acceptConnect()
+                                navController.navigate(Chat)
+                            },
+                            onCanceled = {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    ContextCompat.getString(
+                                        this@MainActivity,
+                                        R.string.reject_connect
+                                    ),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                service.rejectConnect()
+                                navController.popBackStack()
+                            }
+                        )
                     }
                 }
             }

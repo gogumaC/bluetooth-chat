@@ -17,6 +17,10 @@
     <string name="set_discoverable">검색 가능하게 설정</string>
     <string name="request_paring_alert">연결 요청 중입니다…</string>
     <string name="complete_pairing">연결 완료</string>
+    <string name="connect_requested">해당 기기로 부터 연결 요청이 발생했습니다.\n연결을 수락하시겠습니까?</string>
+    <string name="device_name_colon">이름 : %s</string>
+    <string name="device_address_colon">주소 : %s</string>
+    <string name="reject_connect">연결을 거절했습니다.</string>"
 
 
 </resources>
