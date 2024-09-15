@@ -107,7 +107,6 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize(),
                             deviceList = savedBluetoothDevices.value,
                             onBluetoothDeviceScanRequest = {
-                                navController.navigate(Discovery)
                                 service.startDiscovering(this@MainActivity)
                             },
                             onChatScreenNavigateRequested = {

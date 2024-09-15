@@ -6,14 +6,21 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.companion.AssociationRequest
+import android.companion.BluetoothDeviceFilter
+import android.companion.CompanionDeviceManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.IntentSender
 import android.os.Build
+import android.os.ParcelUuid
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -32,6 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.Executor
 
 
 private const val TAG = "BLUETOOTH_DEBUG_TAG"
@@ -52,7 +60,7 @@ class BluetoothService(
     private val pairingState = MutableStateFlow(BluetoothState.STATE_NONE)
 
     private val myUUID =
-        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+        ParcelUuid(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
     private val NAME = "BluetoothChat"
 
     private val _discoveredDevices = MutableStateFlow(mutableSetOf<BluetoothDevice>())
@@ -78,6 +86,10 @@ class BluetoothService(
 
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
     private val connectingDeviceJobMap = mutableMapOf<String, Job>()
+
+    private val deviceFilter: BluetoothDeviceFilter = BluetoothDeviceFilter.Builder().addServiceUuid(
+        myUUID, null
+    ).build()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -143,7 +155,7 @@ class BluetoothService(
                         BluetoothDevice.EXTRA_DEVICE,
                         BluetoothDevice::class.java
                     ) else p1.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    if(device?.address==connectedDevice.value?.address){
+                    if (device?.address == connectedDevice.value?.address) {
                         finishConnect()
                     }
                 }
@@ -151,8 +163,36 @@ class BluetoothService(
         }
     }
 
+    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<IntentSenderRequest>
+    private val pairingRequest: AssociationRequest =
+        AssociationRequest.Builder().addDeviceFilter(deviceFilter).build()
+    private var deviceManager: CompanionDeviceManager =
+        activity?.getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
 
-    private lateinit var bluetoothScanLauncher: ActivityResultLauncher<Intent>
+    private val discoveringCallback: CompanionDeviceManager.Callback =
+        object : CompanionDeviceManager.Callback() {
+            override fun onAssociationPending(intentSender: IntentSender) {
+                super.onAssociationPending(intentSender)
+                if(Build.VERSION.SDK_INT>=33){
+                    Log.d(TAG,"associate success (scan success)")
+                    val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+                    bluetoothScanLauncher.launch(intentSenderRequest)
+                }
+            }
+
+            override fun onFailure(p0: CharSequence?) {
+                Log.d(TAG,"associate fail")
+            }
+
+            override fun onDeviceFound(intentSender: IntentSender) {
+                super.onDeviceFound(intentSender)
+                if(Build.VERSION.SDK_INT<33){
+                    Log.d(TAG,"associate success (scan success)")
+                    val intentSenderRequest = IntentSenderRequest.Builder(intentSender).build()
+                    bluetoothScanLauncher.launch(intentSenderRequest)
+                }
+            }
+        }
 
     init {
         activity?.lifecycle?.addObserver(this)
@@ -179,7 +219,19 @@ class BluetoothService(
         activity?.let {
             it.registerReceiver(receiver, filter)
             bluetoothScanLauncher =
-                it.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+                it.registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {result->
+                    Log.d(TAG,"bluetoothScan finish")
+                    if(result.resultCode==Activity.RESULT_OK){
+                        val device = if (Build.VERSION.SDK_INT >= 33) result.data?.getParcelableExtra(
+                            BluetoothDevice.EXTRA_DEVICE,
+                            BluetoothDevice::class.java
+                        ) else result.data?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                        Log.d(TAG,"Request pairing device name : ${device?.name}")
+                        device?.createBond()
+                    }else{
+                        Log.d(TAG,"scan canceled")
+                    }
+                }
         }
         super.onCreate(owner)
     }
@@ -195,19 +247,23 @@ class BluetoothService(
             Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
                 putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
             }
-        bluetoothScanLauncher.launch(discoverableIntent)
+//        bluetoothScanLauncher.launch(discoverableIntent)
     }
 
     fun startDiscovering(activity: Activity) {
         Log.d(
-            "checkfor",
+            TAG,
             "discovering state : ${bluetoothAdapter.isDiscovering} findStart!"
         )
 
         if (!bluetoothAdapter.isDiscovering) {
             _state.value = BluetoothState.STATE_DISCOVERING
-            val res = bluetoothAdapter.startDiscovery()
-            Log.d("checkfor", "start res: $res")
+            val executor: Executor = Executor { it.run() }
+            if(Build.VERSION.SDK_INT>=33){
+                deviceManager.associate(pairingRequest, executor, discoveringCallback)
+            }else{
+                deviceManager.associate(pairingRequest,discoveringCallback,null)
+            }
 
             activity.registerReceiver(receiver, filter)
         }
@@ -227,7 +283,7 @@ class BluetoothService(
         connectSocket?.close()
 
         try {
-            serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME, myUUID)
+            serverSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(NAME, myUUID.uuid)
             Log.d(TAG, "open ServerSocket : $serverSocket")
             _state.value = BluetoothState.STATE_OPEN_SERVER_SOCKET
             connectSocket = serverSocket?.accept()
@@ -269,7 +325,7 @@ class BluetoothService(
 
         val device = bluetoothAdapter.getRemoteDevice(address)
         connectSocket =
-            device.createRfcommSocketToServiceRecord(myUUID)
+            device.createRfcommSocketToServiceRecord(myUUID.uuid)
         try {
             connectSocket?.connect()
             _connectedDevice.value = connectSocket?.remoteDevice
@@ -321,8 +377,8 @@ class BluetoothService(
 
     fun finishConnect(): Boolean {
         try {
-            connectedDevice.value?.address?.let{
-                if(it in connectingDeviceJobMap){
+            connectedDevice.value?.address?.let {
+                if (it in connectingDeviceJobMap) {
                     connectingDeviceJobMap[it]?.cancel()
                 }
             }
