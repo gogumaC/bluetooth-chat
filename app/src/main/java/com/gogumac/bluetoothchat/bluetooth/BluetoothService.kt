@@ -164,6 +164,7 @@ class BluetoothService(
     }
 
     private lateinit var bluetoothScanLauncher: ActivityResultLauncher<IntentSenderRequest>
+    private lateinit var bluetoothDiscoverableLauncher:ActivityResultLauncher<Intent>
     private val pairingRequest: AssociationRequest =
         AssociationRequest.Builder().addDeviceFilter(deviceFilter).build()
     private var deviceManager: CompanionDeviceManager =
@@ -232,6 +233,14 @@ class BluetoothService(
                         Log.d(TAG,"scan canceled")
                     }
                 }
+
+            bluetoothDiscoverableLauncher=it.registerForActivityResult(ActivityResultContracts.StartActivityForResult()){result->
+                if(result.resultCode==Activity.RESULT_OK){
+                    Log.d(TAG,"discoverable finish")
+                }else{
+                    Log.d(TAG,"discoverable canceled")
+                }
+            }
         }
         super.onCreate(owner)
     }
@@ -244,10 +253,8 @@ class BluetoothService(
 
     fun setBluetoothDiscoverable() {
         val discoverableIntent: Intent =
-            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
-            }
-//        bluetoothScanLauncher.launch(discoverableIntent)
+            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+        bluetoothDiscoverableLauncher.launch(discoverableIntent)
     }
 
     fun startDiscovering(activity: Activity) {
@@ -308,13 +315,14 @@ class BluetoothService(
             }
             connectingDeviceJobMap[device.address] =
                 connectingScope.launch { listenMessage(it) }
-        }
-        //Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
 
+            Log.d(TAG, "connect success.\n connected with ${it.remoteDevice}")
+        }
     }
 
     fun rejectConnect(){
         connectSocket?.close()
+        connectSocket=null
     }
 
     fun closeServerSocket() {

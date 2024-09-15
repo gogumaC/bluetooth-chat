@@ -115,9 +115,6 @@ class MainActivity : ComponentActivity() {
                             onBluetoothDeviceScanRequest = {
                                 service.startDiscovering(this@MainActivity)
                             },
-                            onChatScreenNavigateRequested = {
-                                navController.navigate(Chat)
-                            },
                             onDeviceConnectRequest = { address ->
                                 navController.navigate(DialogConnectLoading(address))
                             },
