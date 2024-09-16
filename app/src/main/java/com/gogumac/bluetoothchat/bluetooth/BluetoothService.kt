@@ -80,7 +80,7 @@ class BluetoothService(
     private val _pairedDeviceList = MutableStateFlow(bluetoothAdapter.bondedDevices.toList())
     val pairedDeviceList: StateFlow<List<BluetoothDevice>> = _pairedDeviceList
 
-    private val _messageFlow = MutableSharedFlow<String>(1)
+    private val _messageFlow = MutableSharedFlow<String>()
     val messageFlow: SharedFlow<String> = _messageFlow.asSharedFlow()
 
     private val connectingScope = CoroutineScope(Job() + Dispatchers.IO)
