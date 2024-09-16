@@ -57,7 +57,6 @@ fun ConnectScreen(
     onBluetoothDeviceScanRequest: () -> Unit,
     onDeviceConnectRequest: (String) -> Unit,
     onSetDiscoverableRequest: () -> Unit,
-    onChatScreenNavigateRequested: () -> Unit,
     onServerSocketOpenRequested: () -> Unit
 ) {
     Column(
@@ -207,7 +206,6 @@ fun ConnectScreenPreview() {
             deviceList = listOf(),
             onBluetoothDeviceScanRequest = {},
             onDeviceConnectRequest = {},
-            onChatScreenNavigateRequested = {},
             onServerSocketOpenRequested = {},
             onSetDiscoverableRequest = {})
     }
